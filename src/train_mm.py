@@ -11,7 +11,9 @@ import torch.nn as nn
 from pathlib import Path
 from leibniz.unet.base import UNet
 from leibniz.unet.hyperbolic import HyperBottleneck
-from leibniz.nn.activation import Swish, Mish
+from leibniz.nn.activation import CappingRelu
+from leibniz.nn.normalizor import PWLNormalizor
+
 
 from dataset.moving_mnist import MovingMNIST
 
@@ -68,13 +70,14 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
+        self.pwln = PWLNormalizor(1, 128, mean=0.0, std=1.0)
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=0,
                             vblks=[6, 6, 6, 6], hblks=[3, 3, 3, 3],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=HyperBottleneck, relu=Swish(), final_normalized=False)
+                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=False)
 
     def forward(self, input):
-        return th.clamp(self.unet(input / 255), max=1.0, min=0) * 255
+        return self.pwln.inverse(self.unet(self.pwln(input)))
 
 
 mdl = MMModel()
