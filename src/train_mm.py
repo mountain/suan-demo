@@ -87,7 +87,7 @@ def train(epoch):
     train_size = 0
     loss_per_epoch = 0.0
     mdl.train()
-    for step, sample in enumerate(test_loader):
+    for step, sample in enumerate(train_loader):
         input, target = sample
         input, target = input.float() / 255.0, target.float() / 255.0
         print('Input:  ', input.shape, input.max(), input.min())
