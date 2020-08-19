@@ -69,9 +69,9 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=0,
-                            vblks=[3, 3, 3, 3], hblks=[1, 1, 1, 1],
+                            vblks=[2, 2, 2, 2], hblks=[2, 2, 2, 2],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=HyperBottleneck, relu=Mish(), final_normalized=False)
+                            block=HyperBottleneck, relu=Swish(), final_normalized=False)
 
     def forward(self, input):
         return th.sigmoid(self.unet(input / 255) * 2 - 1.0) * 255
