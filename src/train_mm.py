@@ -89,8 +89,8 @@ def train(epoch):
     mdl.train()
     for step, sample in enumerate(test_loader):
         input, target = sample
-        print('Input:  ', input.shape)
-        print('Target: ', target.shape)
+        print('Input:  ', input.shape, input.max(), input.min())
+        print('Target: ', target.shape, target.max(), target.min())
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
