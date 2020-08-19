@@ -74,9 +74,7 @@ class MMModel(nn.Module):
                             block=HyperBottleneck, relu=Swish(), final_normalized=False)
 
     def forward(self, input):
-        data = self.unet(input / 255 * 2 - 1.0)
-        value = th.clamp(2 * th.relu(th.sigmoid(data) - 0.5), max=1.0)
-        return value * 255
+        return th.sigmoid(self.unet(input / 255 * 2 - 1.0)) * 255
 
 
 mdl = MMModel()
