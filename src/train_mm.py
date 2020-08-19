@@ -77,7 +77,8 @@ class MMModel(nn.Module):
                             block=HyperBottleneck, relu=CappingRelu(), final_normalized=False)
 
     def forward(self, input):
-        return self.pwln.inverse(self.unet(self.pwln(input)))
+        input = self.pwln(input.reshape(-1, 1, 64, 64)).reshape(-1, 10, 64, 64)
+        return self.pwln.inverse(self.unet(input).reshape(-1, 1, 64, 64)).reshape(-1, 10, 64, 64)
 
 
 mdl = MMModel()
