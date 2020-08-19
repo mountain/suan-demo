@@ -70,15 +70,13 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.pwln = PWLNormalizor(1, 128, mean=0.0, std=1.0)
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=0,
                             vblks=[6, 6, 6, 6], hblks=[3, 3, 3, 3],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
                             block=HyperBottleneck, relu=CappingRelu(), final_normalized=False)
 
     def forward(self, input):
-        input = self.pwln(input.reshape(-1, 1, 64, 64)).reshape(-1, 10, 64, 64)
-        return self.pwln.inverse(self.unet(input).reshape(-1, 1, 64, 64)).reshape(-1, 10, 64, 64)
+        return th.sigmoid(self.unet(input / 255.0)) * 255.0
 
 
 mdl = MMModel()
