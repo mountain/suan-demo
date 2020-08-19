@@ -74,7 +74,7 @@ class MMModel(nn.Module):
                             block=HyperBottleneck, relu=Swish(), final_normalized=False)
 
     def forward(self, input):
-        return th.cumprod(th.softmax(self.unet(input / 255 * 2 - 1.0).reshape(-1, 3, 64, 64), dim=1), dim=1).reshape(-1, 10, 64, 64) * 255
+        return th.prod(th.softmax(self.unet(input / 255 * 2 - 1.0).reshape(-1, 3, 64, 64), dim=1), dim=1).reshape(-1, 10, 64, 64) * 255
 
 
 mdl = MMModel()
