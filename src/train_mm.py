@@ -95,6 +95,7 @@ def train(epoch):
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
+            mdl.cuda()
 
         result = mdl(input)
         loss = mse(result, target)
@@ -120,6 +121,7 @@ def test(epoch):
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
+            mdl.cuda()
 
         with th.no_grad():
             result = mdl(input)
