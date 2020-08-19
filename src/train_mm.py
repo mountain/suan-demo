@@ -53,7 +53,7 @@ if not os.path.exists(root):
 train_set = MovingMNIST(root='.data/mnist', train=True, download=True)
 test_set = MovingMNIST(root='.data/mnist', train=False, download=True)
 
-batch_size = 100
+batch_size = 200
 
 train_loader = torch.utils.data.DataLoader(
                  dataset=train_set,
