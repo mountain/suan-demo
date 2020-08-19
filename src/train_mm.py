@@ -11,6 +11,7 @@ import torch.nn as nn
 from pathlib import Path
 from leibniz.unet.base import UNet
 from leibniz.unet.hyperbolic import HyperBottleneck
+from leibniz.nn.activation import Swish
 
 from dataset.moving_mnist import MovingMNIST
 
@@ -70,7 +71,7 @@ class MMModel(nn.Module):
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=6, ratio=0,
                             vblks=[2, 2, 2, 2, 2, 2], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
-                            block=HyperBottleneck, relu=nn.ReLU(inplace=True), final_normalized=False)
+                            block=HyperBottleneck, relu=Swish(), final_normalized=False)
 
     def forward(self, input):
         return self.unet(input)
