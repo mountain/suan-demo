@@ -90,8 +90,6 @@ def train(epoch):
     for step, sample in enumerate(train_loader):
         input, target = sample
         input, target = input.float() / 255.0, target.float() / 255.0
-        print('Input:  ', input.shape, input.max(), input.min())
-        print('Target: ', target.shape, target.max(), target.min())
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
@@ -126,8 +124,6 @@ def test(epoch):
         with th.no_grad():
             result = mdl(input)
             loss = mse(result, target)
-            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
-            loss_per_epoch += loss.item() * list(result.values())[0].size()[0]
 
             batch = result.size()[0]
             logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
