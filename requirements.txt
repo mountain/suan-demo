@@ -1,9 +1,8 @@
 nose
-nujson
+arrow
 
 numpy
 scipy
-xarray
 leibniz
 torchdiffeq
 torchvision

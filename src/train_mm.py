@@ -113,7 +113,6 @@ def test(epoch):
     mdl.eval()
     test_size = 0
     loss_per_epoch = 0.0
-    inputs, targets, results = None, None, None
     for step, sample in enumerate(test_loader):
         input, target = sample
         if th.cuda.is_available():
