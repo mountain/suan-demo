@@ -103,7 +103,7 @@ def train(epoch):
         loss.backward()
         optimizer.step()
 
-        batch = list(result.values())[0].size()[0]
+        batch = result.size()[0]
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
         loss_per_epoch += loss.item() * batch
         train_size += batch
@@ -129,7 +129,7 @@ def test(epoch):
             logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
             loss_per_epoch += loss.item() * list(result.values())[0].size()[0]
 
-            batch = list(result.values())[0].size()[0]
+            batch = result.size()[0]
             logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
             loss_per_epoch += loss.item() * batch
             test_size += batch
