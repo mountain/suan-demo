@@ -88,7 +88,7 @@ def train(epoch):
     mdl.train()
     for step, sample in enumerate(train_loader):
         input, target = sample
-        input, target = input.float() / 255.0, target.float() / 255.0
+        input, target = input.float(), target.float()
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
@@ -114,7 +114,7 @@ def test(epoch):
     loss_per_epoch = 0.0
     for step, sample in enumerate(test_loader):
         input, target = sample
-        input, target = input.float() / 255.0, target.float() / 255.0
+        input, target = input.float(), target.float()
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
