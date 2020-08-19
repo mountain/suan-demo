@@ -53,7 +53,7 @@ if not os.path.exists(root):
 train_set = MovingMNIST(root='.data/mnist', train=True, download=True)
 test_set = MovingMNIST(root='.data/mnist', train=False, download=True)
 
-batch_size = 200
+batch_size = opt.batch_size
 
 train_loader = torch.utils.data.DataLoader(
                  dataset=train_set,
@@ -69,7 +69,7 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=0,
-                            vblks=[2, 2, 2, 2], hblks=[1, 1, 1, 1],
+                            vblks=[4, 4, 4, 4], hblks=[2, 2, 2, 2],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
                             block=HyperBottleneck, relu=Swish(), final_normalized=False)
 
@@ -133,7 +133,7 @@ def test(epoch):
 
 
 if __name__ == '__main__':
-    for epoch in range(100):
+    for epoch in range(opt.n_epochs):
         try:
             train(epoch)
             test(epoch)
