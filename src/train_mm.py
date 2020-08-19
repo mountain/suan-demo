@@ -74,7 +74,7 @@ class MMModel(nn.Module):
                             block=HyperBottleneck, relu=Swish(), final_normalized=False)
 
     def forward(self, input):
-        data = th.softmax(self.unet(input / 255 * 2 - 1.0).reshape(-1, 3, 64, 64), dim=1)
+        data = th.softmax(self.unet(input / 255 * 2 - 1.0).reshape(-1, 7, 64, 64), dim=1)
         data = th.sum(data, dim=1)
         return data.reshape(-1, 10, 64, 64) * 255
 
