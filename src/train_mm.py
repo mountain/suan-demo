@@ -71,7 +71,7 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=0,
-                            vblks=[6, 6, 6, 6], hblks=[3, 3, 3, 3],
+                            vblks=[9, 9, 9, 9], hblks=[9, 9, 9, 9],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
                             block=HyperBottleneck, relu=CappingRelu(), final_normalized=False)
 
