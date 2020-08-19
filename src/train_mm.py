@@ -76,7 +76,7 @@ class MMModel(nn.Module):
                             block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
-        return th.sigmoid(self.unet(input / 255.0)) * 255.0
+        return self.unet(input / 255.0) * 255.0
 
 
 mdl = MMModel()
