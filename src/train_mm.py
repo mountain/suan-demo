@@ -74,7 +74,7 @@ class MMModel(nn.Module):
                             block=HyperBottleneck, relu=Mish(), final_normalized=False)
 
     def forward(self, input):
-        return self.unet(input / 16) * 16
+        return self.unet(input / 255) * 255
 
 
 mdl = MMModel()
