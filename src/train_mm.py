@@ -77,11 +77,9 @@ class MMModel(nn.Module):
         return self.unet(input)
 
 
-lr = 1e-3
-wd = 1e-2
 mdl = MMModel()
 mse = nn.MSELoss()
-optimizer = th.optim.AdamW(mdl.parameters(), lr=lr, weight_decay=wd)
+optimizer = th.optim.Adam(mdl.parameters())
 
 
 def train(epoch):
