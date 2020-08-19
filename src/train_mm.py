@@ -76,7 +76,7 @@ class MMModel(nn.Module):
     def forward(self, input):
         data = self.unet(input / 255 * 2 - 1.0)
         value = th.sigmoid(data)
-        value = th.prod(value.reshape(-1, 7, 64, 64), dim=1)
+        value = th.sum(value.reshape(-1, 7, 64, 64), dim=1)
         value = value.reshape(-1, 10, 64, 64)
         return value * 255
 
