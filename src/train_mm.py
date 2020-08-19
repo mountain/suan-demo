@@ -68,16 +68,14 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.unet = UNet(10, 70, normalizor='batch', spatial=(64, 64), layers=4, ratio=0,
+        self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=0,
                             vblks=[6, 6, 6, 6], hblks=[3, 3, 3, 3],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
                             block=HyperBottleneck, relu=Swish(), final_normalized=False)
 
     def forward(self, input):
         data = self.unet(input / 255 * 2 - 1.0)
-        value = th.sigmoid(data)
-        value = th.clamp(th.sum(value.reshape(-1, 7, 64, 64), dim=1), max=1.0, min=0)
-        value = value.reshape(-1, 10, 64, 64)
+        value = th.clamp(2 * th.relu(th.sigmoid(data) - 0.5), max=1.0)
         return value * 255
 
 
