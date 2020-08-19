@@ -69,7 +69,7 @@ class MMModel(nn.Module):
         super().__init__()
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=6, ratio=1,
                             vblks=[4, 4, 4, 4, 4, 4], hblks=[2, 2, 2, 2, 2, 2],
-                            scales=[-1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1],
+                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             block=HyperBottleneck, relu=nn.ReLU(), final_normalized=False)
 
     def forward(self, input):
