@@ -70,7 +70,7 @@ class LearningModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.unet = UNet(2, 10, normalizor='batch', spatial=(32, 32), layers=5, ratio=0,
-                            vblks=[9, 9, 9, 9, 9], hblks=[0, 0, 0, 0, 0],
+                            vblks=[6, 6, 6, 6, 6], hblks=[3, 3, 3, 3, 3],
                             scales=[-1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1],
                             block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
 
