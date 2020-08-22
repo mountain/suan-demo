@@ -92,8 +92,9 @@ class PerfectModel(nn.Module):
         return th.cat(result, dim=1)
 
 
-#mdl = LearningModel()
-mdl = PerfectModel()
+mdl = LearningModel()
+pfc = PerfectModel()
+
 mse = nn.MSELoss()
 optimizer = th.optim.Adam(mdl.parameters())
 
@@ -148,11 +149,35 @@ def test(epoch):
     logger.info(f'Epoch: {epoch + 1:03d} | Test Loss: {loss_per_epoch / test_size}')
 
 
+def baseline(epoch):
+    test_size = 0
+    loss_per_epoch = 0.0
+    for step, sample in enumerate(test_loader):
+        input, target = sample
+        input, target = input.float(), target.float()
+        if th.cuda.is_available():
+            input = input.cuda()
+            target = target.cuda()
+            pfc.cuda()
+
+        with th.no_grad():
+            result = pfc(input)
+            loss = mse(result, target)
+
+            batch = result.size()[0]
+            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
+            loss_per_epoch += loss.item() * batch
+            test_size += batch
+
+    logger.info(f'Epoch: {epoch + 1:03d} | Test Loss: {loss_per_epoch / test_size}')
+
+
 if __name__ == '__main__':
     for epoch in range(opt.n_epochs):
         try:
             train(epoch)
             test(epoch)
+            baseline(epoch)
         except Exception as e:
             logger.exception(e)
             break
