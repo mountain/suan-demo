@@ -11,6 +11,7 @@ import torch.nn as nn
 from pathlib import Path
 from leibniz.unet.base import UNet
 from leibniz.unet.hyperbolic import HyperBottleneck
+from leibniz.unet.senet import SEBottleneck
 from leibniz.nn.activation import CappingRelu
 
 from dataset.chaos_tent import ChaosTentDataSet
@@ -71,7 +72,7 @@ class MMModel(nn.Module):
         self.unet = UNet(2, 10, normalizor='batch', spatial=(32, 32), layers=4, ratio=0,
                             vblks=[4, 4, 4, 4], hblks=[4, 4, 4, 4],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
+                            block=SEBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
         return self.unet(input / 255.0) * 255.0
