@@ -20,9 +20,9 @@ from dataset.chaos_tent import ChaosTentDataSet
 parser = argparse.ArgumentParser()
 parser.add_argument("-g", "--gpu", type=str, default='0', help="index of gpu")
 parser.add_argument("-c", "--n_cpu", type=int, default=64, help="number of cpu threads to use during batch generation")
-parser.add_argument("-b", "--batch_size", type=int, default=64, help="size of the batches")
+parser.add_argument("-b", "--batch_size", type=int, default=128, help="size of the batches")
 parser.add_argument("-e", "--epoch", type=int, default=0, help="current epoch to start training from")
-parser.add_argument("-n", "--n_epochs", type=int, default=200, help="number of epochs of training")
+parser.add_argument("-n", "--n_epochs", type=int, default=500, help="number of epochs of training")
 parser.add_argument("-m", "--model", type=str, default='', help="metrological model to load")
 parser.add_argument("-k", "--check", type=str, default='', help="checkpoint file to load")
 opt = parser.parse_args()
@@ -69,10 +69,10 @@ test_loader = torch.utils.data.DataLoader(
 class LearningModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.unet = UNet(2, 10, normalizor='batch', spatial=(32, 32), layers=4, ratio=0,
-                            vblks=[4, 4, 4, 4], hblks=[4, 4, 4, 4],
-                            scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=SEBottleneck, relu=CappingRelu(), final_normalized=True)
+        self.unet = UNet(2, 10, normalizor='batch', spatial=(32, 32), layers=5, ratio=0,
+                            vblks=[9, 9, 9, 9, 9], hblks=[0, 0, 0, 0, 0],
+                            scales=[-1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1],
+                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
         return self.unet(input / 255.0) * 255.0
@@ -169,7 +169,7 @@ def baseline(epoch):
             loss_per_epoch += loss.item() * batch
             test_size += batch
 
-    logger.info(f'Epoch: {epoch + 1:03d} | Test Loss: {loss_per_epoch / test_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Baseline: {loss_per_epoch / test_size}')
 
 
 if __name__ == '__main__':
