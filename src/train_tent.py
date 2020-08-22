@@ -66,7 +66,7 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=False)
 
 
-class MMModel(nn.Module):
+class LearningModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.unet = UNet(2, 10, normalizor='batch', spatial=(32, 32), layers=4, ratio=0,
@@ -78,7 +78,21 @@ class MMModel(nn.Module):
         return self.unet(input / 255.0) * 255.0
 
 
-mdl = MMModel()
+class PerfectModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, input):
+        result = []
+        z = input[:, 1:2]
+        for ix in range(10):
+            z = th.where(z < 0.5, 2 * z, 2 - 2 * z)
+            result.append(z)
+        return th.cat(result, dim=1)
+
+
+#mdl = LearningModel()
+mdl = PerfectModel()
 mse = nn.MSELoss()
 optimizer = th.optim.Adam(mdl.parameters())
 
