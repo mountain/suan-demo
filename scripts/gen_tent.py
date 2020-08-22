@@ -1,9 +1,6 @@
 import numpy as np
 import cv2
 
-nx, ny = (32, 32)
-xx, yy = np.meshgrid(np.linspace(0, 1, nx), np.linspace(0, 1, ny))
-z = np.sin(0.5 * np.pi * (xx * xx + yy * yy))
 
 for ix in range(800):
     z = np.random.rand(32, 32)
