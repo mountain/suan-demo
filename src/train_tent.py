@@ -81,6 +81,7 @@ class LearningModel(nn.Module):
 class PerfectModel(nn.Module):
     def __init__(self):
         super().__init__()
+        self.dummy = th.zeros(1)
 
     def forward(self, input):
         result = []
