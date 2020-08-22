@@ -12,7 +12,7 @@ class ChaosTentDataSet(data.Dataset):
         for jx in range(11):
             z = (z < 0.5) * (2 * z) + (z >= 0.5) * (2 - 2 * z) + np.random.rand(32, 32) * 0.01
             z = z * (z < 1.0) * (z > 0.0)
-            seq.apeend(z.reshape(1, 256, 256))
+            seq.append(z.reshape(1, 256, 256))
         seq = np.concatenate(seq, axis=0)
         return seq[0:2], seq[2:12]
 
