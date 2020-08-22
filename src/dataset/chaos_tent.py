@@ -7,7 +7,7 @@ class ChaosTentDataSet(data.Dataset):
         self.length = length
 
     def __getitem__(self, index):
-        z = np.random.rand(32, 32)
+        z = np.random.rand(1, 32, 32)
         seq = [z]
         for jx in range(11):
             z = (z < 0.5) * (2 * z) + (z >= 0.5) * (2 - 2 * z) + np.random.rand(32, 32) * 0.01
