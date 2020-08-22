@@ -20,7 +20,7 @@ from dataset.chaos_tent import ChaosTentDataSet
 parser = argparse.ArgumentParser()
 parser.add_argument("-g", "--gpu", type=str, default='0', help="index of gpu")
 parser.add_argument("-c", "--n_cpu", type=int, default=64, help="number of cpu threads to use during batch generation")
-parser.add_argument("-b", "--batch_size", type=int, default=128, help="size of the batches")
+parser.add_argument("-b", "--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("-e", "--epoch", type=int, default=0, help="current epoch to start training from")
 parser.add_argument("-n", "--n_epochs", type=int, default=500, help="number of epochs of training")
 parser.add_argument("-m", "--model", type=str, default='', help="metrological model to load")
