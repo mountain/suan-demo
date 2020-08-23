@@ -66,6 +66,43 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=False)
 
 
+mean_loader = torch.utils.data.DataLoader(
+                 dataset=train_set,
+                 batch_size=batch_size,
+                 shuffle=True)
+
+
+total_sum = 0.0
+total_cnt = 0.0
+for step, sample in enumerate(mean_loader):
+    input, target = sample
+    input, target = input.float(), target.float()
+    data = th.cat((input, target), dim=1)
+    total_sum += data.sum().item()
+    total_cnt += np.prod(data.size())
+
+mean = total_sum / total_cnt
+print(mean)
+
+
+std_loader = torch.utils.data.DataLoader(
+                 dataset=train_set,
+                 batch_size=batch_size,
+                 shuffle=True)
+
+total_std = 0.0
+total_cnt = 0.0
+for step, sample in enumerate(mean_loader):
+    input, target = sample
+    input, target = input.float(), target.float()
+    data = th.cat((input, target), dim=1)
+    total_std += ((data - mean) * (data - mean)).sum().item()
+    total_cnt += np.prod(data.size())
+
+std = total_std / total_cnt
+print(std)
+
+
 class LearningModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -75,7 +112,7 @@ class LearningModel(nn.Module):
                             block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
-        return self.unet(input / 255.0) * 255.0
+        return self.unet((input - mean) / std) * std + mean
 
 
 class PerfectModel(nn.Module):
