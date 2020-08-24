@@ -9,8 +9,8 @@ class ChaosParabolaDataSet(data.Dataset):
 
     def __getitem__(self, index):
         z = np.random.rand(1, 32, 32) * 2 - 1
-        seq = [z]
-        for jx in range(11):
+        seq = []
+        for jx in range(12):
             z = z + np.random.normal(scale=0.001, size=(32, 32))
             z = z * (z > -1.0) * (z < 1.0)
             z = 1 - mu * z * z
