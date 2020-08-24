@@ -14,6 +14,7 @@ from leibniz.unet.complex_hyperbolic import CmplxHyperBottleneck
 from leibniz.unet.hyperbolic import HyperBottleneck
 from leibniz.unet.senet import SEBottleneck
 from leibniz.nn.activation import CappingRelu
+from leibniz.nn.normalizor import PWLNormalizor
 
 from dataset.chaos_parabola import ChaosParabolaDataSet
 
@@ -107,13 +108,19 @@ print(std)
 class LearningModel(nn.Module):
     def __init__(self):
         super().__init__()
+        self.pwln = PWLNormalizor(1, 128)
         self.unet = UNet(2, 10, normalizor='batch', spatial=(32, 32), layers=5, ratio=0,
                             vblks=[2, 2, 2, 2, 2], hblks=[2, 2, 2, 2, 2],
                             scales=[-1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1],
                             block=CmplxHyperBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
-        return self.unet((input - mean) / std) * std + mean
+        input = (input - mean) / std
+        input = self.pwln(input.reshape(-1, 1, 32, 32)).reshape(-1, 2, 32, 32)
+        output = self.unet(input)
+        output = self.pwln.inverse(output.reshape(-1, 1, 32, 32)).reshape(-1, 2, 32, 32)
+        output = output * std + mean
+        return output
 
 
 class PerfectModel(nn.Module):
