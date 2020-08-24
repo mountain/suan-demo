@@ -10,6 +10,7 @@ import torch.nn as nn
 
 from pathlib import Path
 from leibniz.unet.base import UNet
+from leibniz.unet.complex_hyperbolic import CmplxHyperBottleneck
 from leibniz.unet.hyperbolic import HyperBottleneck
 from leibniz.unet.senet import SEBottleneck
 from leibniz.nn.activation import CappingRelu
@@ -109,7 +110,7 @@ class LearningModel(nn.Module):
         self.unet = UNet(2, 10, normalizor='batch', spatial=(32, 32), layers=5, ratio=0,
                             vblks=[2, 2, 2, 2, 2], hblks=[2, 2, 2, 2, 2],
                             scales=[-1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1],
-                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
+                            block=CmplxHyperBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
         return self.unet((input - mean) / std) * std + mean
