@@ -118,7 +118,7 @@ class LearningModel(nn.Module):
         input = (input - mean) / std
         input = self.pwln(input.reshape(-1, 1, 32, 32)).reshape(-1, 2, 32, 32)
         output = self.unet(input)
-        output = self.pwln.inverse(output.reshape(-1, 1, 32, 32)).reshape(-1, 2, 32, 32)
+        output = self.pwln.inverse(output.reshape(-1, 1, 32, 32)).reshape(-1, 10, 32, 32)
         output = output * std + mean
         return output
 
