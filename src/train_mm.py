@@ -10,8 +10,14 @@ import torch.nn as nn
 
 from pathlib import Path
 from leibniz.unet.base import UNet
+from leibniz.unet.complex_hyperbolic import CmplxHyperBottleneck
+from leibniz.unet.hyperbolic import HyperBottleneck
+from leibniz.unet.senet import SEBottleneck
 from leibniz.unet.senet import SELayer
 from leibniz.nn.activation import CappingRelu
+
+from blks.direct import DirectBlocks
+from blks.am import AMBlocks
 
 from dataset.moving_mnist import MovingMNIST
 
@@ -118,7 +124,7 @@ class MMModel(nn.Module):
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=np.log2(3),
                             vblks=[4, 4, 4, 4], hblks=[4, 4, 4, 4],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
+                            block=AMBlocks, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
         return self.unet(input / 255.0) * 255.0

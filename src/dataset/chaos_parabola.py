@@ -3,6 +3,7 @@ import torch.utils.data as data
 
 mu = 2
 
+
 class ChaosParabolaDataSet(data.Dataset):
     def __init__(self, length):
         self.length = length
@@ -11,7 +12,7 @@ class ChaosParabolaDataSet(data.Dataset):
         z = np.random.rand(1, 32, 32) * 2 - 1
         seq = []
         for jx in range(12):
-            z = z + np.random.normal(scale=0.001, size=(32, 32))
+            z = z + np.random.normal(scale=0.01, size=(32, 32))
             z = z * (z > -1.0) * (z < 1.0)
             z = 1 - mu * z * z
             seq.append(z.reshape(1, 32, 32))
