@@ -121,10 +121,10 @@ class HyperBottleneck(nn.Module):
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=np.log2(3),
+        self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=-2,
                             vblks=[4, 4, 4, 4], hblks=[4, 4, 4, 4],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=AMBlocks, relu=CappingRelu(), final_normalized=True)
+                            block=SEBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
         return self.unet(input / 255.0) * 255.0
