@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class AMBlocks(nn.Module):
-    extension = 2
+    extension = 1
     least_required_dim = 1
 
     def __init__(self, dim, step, relu, conv, reduction=16):
