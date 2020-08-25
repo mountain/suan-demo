@@ -2,6 +2,8 @@ import numpy as np
 import torch as th
 import torch.nn as nn
 
+from leibniz.unet.senet import SELayer
+
 
 class AMBlocks(nn.Module):
     extension = 1
@@ -27,14 +29,19 @@ class AMBlocks(nn.Module):
         self.conv2 = self.conv(dim, dim, kernel_size=3, padding=1, bias=False)
         self.conv3 = self.conv(dim, dim, kernel_size=3, padding=1, bias=False)
 
+        self.se_theta = SELayer(dim)
+        self.se_u = SELayer(dim)
+
     def forward(self, x):
 
         theta = self.conv0(x)
         theta = self.relu(theta)
-        theta = 2 * np.pi * self.conv1(theta)
+        theta = self.conv1(theta)
+        theta = 2 * np.pi * self.se_theta(theta)
 
         u = self.conv2(x)
         u = self.relu(u)
         u = self.conv3(u)
+        u = self.se_u(u)
 
         return (x + u * th.cos(theta)) * (1 + u * th.sin(theta))
