@@ -71,60 +71,13 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=False)
 
 
-class HyperBottleneck(nn.Module):
-    extension = 3
-    least_required_dim = 1
-
-    def __init__(self, dim, step, relu, conv, reduction=16):
-        super(HyperBottleneck, self).__init__()
-        self.dim = dim
-        self.step = step
-
-        if relu is None:
-            self.relu = nn.ReLU(inplace=True)
-        else:
-            self.relu = relu
-
-        if conv is None:
-            self.conv = nn.Conv2d
-        else:
-            self.conv = conv
-
-        self.conv2 = self.conv(2 * dim, 2 * dim // 4, kernel_size=1, bias=False)
-        self.conv3 = self.conv(2 * dim // 4, dim // 2, kernel_size=3, bias=False, padding=1)
-        self.conv4 = self.conv(dim // 2, dim, kernel_size=1, bias=False)
-        self.se = SELayer(dim, reduction)
-
-    def forward(self, y):
-
-        x, theta, u = y[:, 0:self.dim // 3], y[:, self.dim // 3:2 * self.dim // 3], y[:, 2 * self.dim // 3:self.dim]
-        cs = self.step * u * th.cos(theta * np.pi * 6)
-        ss = self.step * u * th.sin(theta * np.pi * 6)
-
-        y1 = (1 + ss) * x + cs
-        y2 = (1 + cs) * x - ss
-        y3 = (1 - cs) * x + ss
-        y4 = (1 - ss) * x - cs
-        ys = th.cat((y1, y2, y3, y4, cs, ss), dim=1)
-
-        dy = self.conv2(ys)
-        dy = self.relu(dy)
-        dy = self.conv3(dy)
-        dy = self.relu(dy)
-        dy = self.conv4(dy)
-
-        y = y + self.se(dy)
-
-        return y
-
-
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=-2,
                             vblks=[4, 4, 4, 4], hblks=[4, 4, 4, 4],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=DirectBlocks, relu=CappingRelu(), final_normalized=True)
+                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
         return self.unet(input / 255.0) * 255.0
