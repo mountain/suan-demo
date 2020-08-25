@@ -124,7 +124,7 @@ class MMModel(nn.Module):
         self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=-2,
                             vblks=[4, 4, 4, 4], hblks=[4, 4, 4, 4],
                             scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
+                            block=DirectBlocks, relu=CappingRelu(), final_normalized=True)
 
     def forward(self, input):
         return self.unet(input / 255.0) * 255.0
