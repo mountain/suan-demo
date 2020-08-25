@@ -1,3 +1,4 @@
+import numpy as np
 import torch as th
 import torch.nn as nn
 
@@ -30,7 +31,7 @@ class AMBlocks(nn.Module):
 
         theta = self.conv0(x)
         theta = self.relu(theta)
-        theta = self.conv1(theta)
+        theta = 2 * np.pi * self.conv1(theta)
 
         u = self.conv2(x)
         u = self.relu(u)
