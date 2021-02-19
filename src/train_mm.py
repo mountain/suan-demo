@@ -76,18 +76,18 @@ class MMModel(nn.Module):
         self.rconvs = nn.ModuleList()
         self.bnorms = nn.ModuleList()
         self.senets = nn.ModuleList()
-        for ix in range(40):
+        for ix in range(50):
             self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
             self.bnorms.append(nn.BatchNorm2d(40, affine=True))
             self.senets.append(SELayer(40))
-        for ix in range(20):
+        for ix in range(25):
             self.rconvs.append(nn.Conv2d(40, 20, kernel_size=3, padding=1))
 
     def forward(self, input):
         input = input / 255.0
         output = th.zeros_like(input)
         flow = self.iconv(input)
-        for ix in range(40):
+        for ix in range(50):
             flow = self.fconvs[ix](flow)
             flow = self.relu(flow)
             flow = self.bnorms[ix](flow)
