@@ -10,6 +10,8 @@ import torch.nn as nn
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
+from leibniz.unet import resunet
+from leibniz.unet.hyperbolic import HyperBottleneck
 from leibniz.unet.senet import SELayer
 
 from dataset.moving_mnist import MovingMNIST
@@ -67,36 +69,22 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
+        self.unet = resunet(10, 200, block=HyperBottleneck, layers=6, ratio=1,
+                vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
+                spatial=(64, 64))
         self.relu = nn.ReLU(inplace=True)
-        self.iconv = nn.Conv2d(10, 40, kernel_size=5, padding=2)
         self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
-        self.se = SELayer(10)
         self.relu6 = nn.ReLU6(inplace=True)
-        self.fconvs = nn.ModuleList()
-        self.rconvs = nn.ModuleList()
-        self.bnorms = nn.ModuleList()
-        self.senets = nn.ModuleList()
-        for ix in range(60):
-            self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
-            self.bnorms.append(nn.BatchNorm2d(40, affine=True))
-            self.senets.append(SELayer(40))
-        for ix in range(15):
-            self.rconvs.append(nn.Conv2d(40, 20, kernel_size=3, padding=1))
-        self.regular = None
 
     def forward(self, input):
         input = input / 255.0
+        flow = self.unet(input).view(-1, 10, 10, 2, 64, 64)
         output = th.zeros_like(input)
-        flow = self.iconv(input)
-        for ix in range(60):
-            flow = self.fconvs[ix](flow)
-            flow = self.relu(flow)
-            flow = self.bnorms[ix](flow)
-            flow = self.senets[ix](flow)
-            if ix % 4 == 3:
-                jx = (ix - 3) // 4
-                param = self.rconvs[jx](flow)
-                output = (output + param[:, 0:10]) * (1 + param[:, 10:20]) * input
+        for ix in range(10):
+            aparam = flow[:, :, ix, 0]
+            mparam = flow[:, :, ix, 1]
+            output = (output + aparam) * (1 + mparam) * input
 
         output = self.relu6(self.oconv(self.relu(output))) / 6
         return output * 255.0
