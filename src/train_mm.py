@@ -109,6 +109,7 @@ def train(epoch):
     total_ssim = 0.0
     mdl.train()
     for step, sample in enumerate(train_loader):
+        logger.info(f'-----------------------------------------------------------------------')
         input, target = sample
         input, target = input.float(), target.float()
         if th.cuda.is_available():
@@ -140,6 +141,7 @@ def train(epoch):
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
         total_ssim += sim
 
+    logger.info(f'======================================================================')
     logger.info(f'Epoch: {epoch + 1:03d} | Train MSE Loss: {loss_mse / train_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Train MAE Loss: {total_ssim / train_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Train SSIM: {total_ssim / train_size}')
@@ -160,6 +162,7 @@ def test(epoch):
             mdl.cuda()
 
         with th.no_grad():
+            logger.info(f'-----------------------------------------------------------------------')
             result = mdl(input)
             batch = result.size()[0]
             test_size += batch
@@ -181,6 +184,7 @@ def test(epoch):
             logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
             total_ssim += sim
 
+    logger.info(f'======================================================================')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MSE Loss: {loss_mse / test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {total_ssim / test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {total_ssim / test_size}')
