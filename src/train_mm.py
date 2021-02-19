@@ -86,7 +86,7 @@ class MMModel(nn.Module):
 
     def forward(self, input):
         input = input / 255.0
-        output = th.zeros_like(input)
+        output = th.cat((th.zeros_like(input), th.zeros_like(input)), dim=1)
         flow = self.iconv(input)
         for ix in range(60):
             flow = self.fconvs[ix](flow)
