@@ -102,8 +102,10 @@ class MMModel(nn.Module):
 
 
 mdl = MMModel()
-mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).sum()
-mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).sum()
+mse = nn.MSELoss()
+
+evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).sum()
+evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).sum()
 optimizer = th.optim.Adam(mdl.parameters())
 
 
@@ -127,11 +129,11 @@ def train(epoch):
         loss.backward()
         optimizer.step()
 
-        batch = result.size()[0]
+        loss = evl_mse(result, target).detach()
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MSE Loss: {loss.item()}')
         loss_mse += loss.item()
 
-        loss = mae(result, target)
+        loss = evl_mae(result, target).detach()
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MAE Loss: {loss.item()}')
         loss_mae += loss.item()
 
@@ -170,10 +172,10 @@ def test(epoch):
             result = mdl(input)
             batch = result.size()[0]
 
-            loss = mse(result, target)
+            loss = evl_mse(result, target)
             loss_mse += loss.item() * batch
 
-            loss = mae(result, target)
+            loss = evl_mae(result, target)
             loss_mae += loss.item() * batch
 
             sim = 0.0
