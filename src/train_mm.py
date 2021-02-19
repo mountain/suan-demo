@@ -9,7 +9,7 @@ import torch as th
 import torch.nn as nn
 
 from pathlib import Path
-
+from skimage.metrics import structural_similarity as ssim
 from leibniz.unet.senet import SELayer
 
 from dataset.moving_mnist import MovingMNIST
@@ -100,12 +100,15 @@ class MMModel(nn.Module):
 
 mdl = MMModel()
 mse = nn.MSELoss()
+mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).sum()
 optimizer = th.optim.Adam(mdl.parameters())
 
 
 def train(epoch):
     train_size = 0
-    loss_per_epoch = 0.0
+    loss_mse = 0.0
+    loss_mae = 0.0
+    total_ssim = 0.0
     mdl.train()
     for step, sample in enumerate(train_loader):
         input, target = sample
@@ -122,17 +125,34 @@ def train(epoch):
         optimizer.step()
 
         batch = result.size()[0]
-        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
-        loss_per_epoch += loss.item() * batch
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MSE Loss: {loss.item()}')
+        loss_mse += loss.item() * batch
         train_size += batch
 
-    logger.info(f'Epoch: {epoch + 1:03d} | Train Loss: {loss_per_epoch / train_size}')
+        loss = mae(result, target)
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MAE Loss: {loss.item()}')
+        loss_mae += loss.item() * batch
+
+        sim = 0.0
+        for ix in range(0, target.shape[0]):
+            for jx in range(0, target.shape[1]):
+                imgx = result[ix, jx].detach().numpy()
+                imgy = target[ix, jx].detach().numpy()
+                sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
+        total_ssim += sim
+
+    logger.info(f'Epoch: {epoch + 1:03d} | Train MSE Loss: {loss_mse / train_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Train MAE Loss: {total_ssim / train_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Train SSIM: {total_ssim / train_size}')
 
 
 def test(epoch):
     mdl.eval()
     test_size = 0
-    loss_per_epoch = 0.0
+    loss_mse = 0.0
+    loss_mae = 0.0
+    total_ssim = 0.0
     for step, sample in enumerate(test_loader):
         input, target = sample
         input, target = input.float(), target.float()
@@ -143,14 +163,29 @@ def test(epoch):
 
         with th.no_grad():
             result = mdl(input)
-            loss = mse(result, target)
-
             batch = result.size()[0]
-            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | Loss: {loss.item()}')
-            loss_per_epoch += loss.item() * batch
             test_size += batch
 
-    logger.info(f'Epoch: {epoch + 1:03d} | Test Loss: {loss_per_epoch / test_size}')
+            loss = mse(result, target)
+            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MSE Loss: {loss.item()}')
+            loss_mse += loss.item() * batch
+
+            loss = mae(result, target)
+            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MAE Loss: {loss.item()}')
+            loss_mae += loss.item() * batch
+
+            sim = 0.0
+            for ix in range(0, target.shape[0]):
+                for jx in range(0, target.shape[1]):
+                    imgx = result[ix, jx].detach().numpy()
+                    imgy = target[ix, jx].detach().numpy()
+                    sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
+            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
+            total_ssim += sim
+
+    logger.info(f'Epoch: {epoch + 1:03d} | Test MSE Loss: {loss_mse / test_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {total_ssim / test_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {total_ssim / test_size}')
 
 
 if __name__ == '__main__':
