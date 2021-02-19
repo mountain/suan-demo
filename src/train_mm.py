@@ -99,10 +99,9 @@ class MMModel(nn.Module):
 
 mdl = nn.DataParallel(MMModel(), output_device=0)
 mse = nn.MSELoss()
-mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).mean()
 
-evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).sum()
-evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).sum()
+evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).mean()
+evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).mean()
 optimizer = th.optim.Adam(mdl.parameters())
 
 
@@ -121,7 +120,7 @@ def train(epoch):
             mdl.cuda()
 
         result = mdl(input)
-        loss = mae(result, target)
+        loss = mse(result, target)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
