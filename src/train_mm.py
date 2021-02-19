@@ -143,8 +143,9 @@ def train(epoch):
 
     logger.info(f'======================================================================')
     logger.info(f'Epoch: {epoch + 1:03d} | Train MSE Loss: {loss_mse / train_size}')
-    logger.info(f'Epoch: {epoch + 1:03d} | Train MAE Loss: {total_ssim / train_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {loss_mae/ train_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Train SSIM: {total_ssim / train_size}')
+    logger.info(f'======================================================================')
 
 
 def test(epoch):
@@ -162,17 +163,14 @@ def test(epoch):
             mdl.cuda()
 
         with th.no_grad():
-            logger.info(f'-----------------------------------------------------------------------')
             result = mdl(input)
             batch = result.size()[0]
             test_size += batch
 
             loss = mse(result, target)
-            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MSE Loss: {loss.item()}')
             loss_mse += loss.item() * batch
 
             loss = mae(result, target)
-            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MAE Loss: {loss.item()}')
             loss_mae += loss.item() * batch
 
             sim = 0.0
@@ -181,13 +179,13 @@ def test(epoch):
                     imgx = result[ix, jx].detach().cpu().numpy()
                     imgy = target[ix, jx].detach().cpu().numpy()
                     sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
-            logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
             total_ssim += sim
 
     logger.info(f'======================================================================')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MSE Loss: {loss_mse / test_size}')
-    logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {total_ssim / test_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {loss_mae/ test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {total_ssim / test_size}')
+    logger.info(f'======================================================================')
 
 
 if __name__ == '__main__':
