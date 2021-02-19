@@ -94,8 +94,6 @@ class MMModel(nn.Module):
             flow = self.senets[ix](flow)
             param = self.rconvs[ix](flow)
             output = (output + param[:, 0:10]) * param[:, 10:20] * input
-            output = self.relu(output)
-            output = self.se(output)
             output = self.relu6(self.oconv(output)) / 6
 
         return output * 255.0
