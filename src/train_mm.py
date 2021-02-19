@@ -100,7 +100,7 @@ class MMModel(nn.Module):
 
 
 mdl = MMModel()
-mse = nn.MSELoss()
+mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).sum()
 mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).sum()
 optimizer = th.optim.Adam(mdl.parameters())
 
