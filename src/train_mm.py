@@ -81,7 +81,11 @@ class MMModel(nn.Module):
         input = input / 255.0
         b, c, w, h = input.size()
         flow = self.unet(input).view(-1, 40, 2, 4, 64, 64)
+
         output = th.zeros(b, 40, w, h)
+        if th.cuda.is_available():
+            output = output.cuda()
+
         for ix in range(2):
             aparam = flow[:, :, ix, 0]
             mparam = flow[:, :, ix, 1]
