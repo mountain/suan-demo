@@ -9,18 +9,14 @@ import torch as th
 import torch.nn as nn
 
 from pathlib import Path
-from leibniz.unet.base import UNet
-from leibniz.unet.warpped_hyperbolic2d import HyperBottleneck
-from leibniz.nn.activation import CappingRelu
 
-from blks.direct import DirectBlocks
-from blks.am import AMBlocks
+from leibniz.unet.senet import SELayer
 
 from dataset.moving_mnist import MovingMNIST
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-g", "--gpu", type=str, default='0', help="index of gpu")
+parser.add_argument("-g", "--gpu", type=str, default='-1', help="index of gpu")
 parser.add_argument("-c", "--n_cpu", type=int, default=64, help="number of cpu threads to use during batch generation")
 parser.add_argument("-b", "--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("-e", "--epoch", type=int, default=0, help="current epoch to start training from")
@@ -71,13 +67,35 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.unet = UNet(10, 10, normalizor='batch', spatial=(64, 64), layers=4, ratio=-2,
-                            vblks=[4, 4, 4, 4], hblks=[4, 4, 4, 4],
-                            scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
-                            block=HyperBottleneck, relu=CappingRelu(), final_normalized=True)
+        self.relu = nn.ReLU(inplace=True)
+        self.iconv = nn.Conv2d(10, 40, kernel_size=5, padding=2)
+        self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
+        self.fconvs = nn.ModuleList()
+        self.rconvs = nn.ModuleList()
+        self.bnorms = nn.ModuleList()
+        self.senets = nn.ModuleList()
+        for ix in range(40):
+            self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
+            self.bnorms.append(nn.BatchNorm2d(40, affine=True))
+            self.senets.append(SELayer(40))
+        for ix in range(10):
+            self.rconvs.append(nn.Conv2d(40, 20, kernel_size=3, padding=1))
 
     def forward(self, input):
-        return self.unet(input / 255.0) * 255.0
+        input = input / 255.0
+        output = th.zeros_like(input)
+        flow = self.iconv(input)
+        for ix in range(40):
+            flow = self.fconvs[ix](flow)
+            flow = self.relu(flow)
+            flow = self.bnorms[ix](flow)
+            flow = self.senets[ix](flow)
+            if ix % 4 == 3:
+                jx = (ix - 3) // 4
+                param = self.rconvs[jx](flow)
+                output = (output + param[:, 0:10]) * param[:, 10:20] * input
+
+        return self.oconv(output) * 255.0
 
 
 mdl = MMModel()
