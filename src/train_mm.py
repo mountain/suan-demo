@@ -145,7 +145,7 @@ def train(epoch):
                 sml = ssim(imgx, imgy)
                 sim += sml / (imgx.shape[0] * imgx.shape[1])
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
-        total_ssim += sim
+        total_ssim += sim * batch_size
 
     logger.info(f'======================================================================')
     logger.info(f'Epoch: {epoch + 1:03d} | Train MSE Loss: {loss_mse / train_size}')
@@ -185,7 +185,7 @@ def test(epoch):
                     imgx = result[ix, jx].detach().cpu().numpy()
                     imgy = target[ix, jx].detach().cpu().numpy()
                     sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
-            total_ssim += sim
+            total_ssim += sim * batch_size
 
     logger.info(f'======================================================================')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MSE Loss: {loss_mse / test_size}')
