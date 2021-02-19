@@ -134,8 +134,8 @@ def train(epoch):
         sim = 0.0
         for ix in range(0, target.shape[0]):
             for jx in range(0, target.shape[1]):
-                imgx = result[ix, jx].detach().numpy()
-                imgy = target[ix, jx].detach().numpy()
+                imgx = result[ix, jx].detach().cpu().numpy()
+                imgy = target[ix, jx].detach().cpu().numpy()
                 sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
         total_ssim += sim
