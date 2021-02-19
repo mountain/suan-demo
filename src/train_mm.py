@@ -68,8 +68,8 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU(inplace=True)
-        self.iconv = nn.Conv2d(10, 80, kernel_size=5, padding=2)
-        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
+        self.iconv = nn.Conv2d(10, 40, kernel_size=5, padding=2)
+        self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
         self.se = SELayer(10)
         self.relu6 = nn.ReLU6(inplace=True)
         self.fconvs = nn.ModuleList()
@@ -77,16 +77,16 @@ class MMModel(nn.Module):
         self.bnorms = nn.ModuleList()
         self.senets = nn.ModuleList()
         for ix in range(60):
-            self.fconvs.append(nn.Conv2d(80, 80, kernel_size=5, padding=2))
-            self.bnorms.append(nn.BatchNorm2d(80, affine=True))
-            self.senets.append(SELayer(80))
+            self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
+            self.bnorms.append(nn.BatchNorm2d(40, affine=True))
+            self.senets.append(SELayer(40))
         for ix in range(15):
-            self.rconvs.append(nn.Conv2d(80, 40, kernel_size=3, padding=1))
+            self.rconvs.append(nn.Conv2d(40, 20, kernel_size=3, padding=1))
         self.regular = None
 
     def forward(self, input):
         input = input / 255.0
-        output = th.cat((th.zeros_like(input), th.zeros_like(input)), dim=1)
+        output = th.zeros_like(input)
         flow = self.iconv(input)
         for ix in range(60):
             flow = self.fconvs[ix](flow)
@@ -96,7 +96,7 @@ class MMModel(nn.Module):
             if ix % 4 == 3:
                 jx = (ix - 3) // 4
                 param = self.rconvs[jx](flow)
-                output = (output + param[:, 0:20]) * param[:, 20:40] * input
+                output = (output + param[:, 0:10]) * (1 + param[:, 10:20]) * input
 
         output = self.relu6(self.oconv(self.relu(output))) / 6
         return output * 255.0
