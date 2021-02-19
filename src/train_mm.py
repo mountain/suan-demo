@@ -70,6 +70,7 @@ class MMModel(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.iconv = nn.Conv2d(10, 40, kernel_size=5, padding=2)
         self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
+        self.se = SELayer(10)
         self.fconvs = nn.ModuleList()
         self.rconvs = nn.ModuleList()
         self.bnorms = nn.ModuleList()
@@ -92,6 +93,8 @@ class MMModel(nn.Module):
             flow = self.senets[ix](flow)
             param = self.rconvs[ix](flow)
             output = (output + param[:, 0:10]) * param[:, 10:20] * input
+            output = self.relu(output)
+            output = self.se(output)
 
         return self.oconv(output) * 255.0
 
@@ -137,7 +140,8 @@ def train(epoch):
             for jx in range(0, target.shape[1]):
                 imgx = result[ix, jx].detach().cpu().numpy()
                 imgy = target[ix, jx].detach().cpu().numpy()
-                sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
+                sml = ssim(imgx, imgy)
+                sim += sml / (imgx.shape[0] * imgx.shape[1])
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
         total_ssim += sim
 
