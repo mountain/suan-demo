@@ -100,13 +100,12 @@ class MMModel(nn.Module):
 
 
 mdl = MMModel()
-mse = lambda x, y: th.mean((x - y)**2, dim=(2, 3)).mean()
-mae = lambda x, y: th.mean(th.abs(x - y), dim=(2, 3)).mean()
+mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).sum()
+mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).sum()
 optimizer = th.optim.Adam(mdl.parameters())
 
 
 def train(epoch):
-    train_size = 0
     loss_mse = 0.0
     loss_mae = 0.0
     total_ssim = 0.0
@@ -128,12 +127,11 @@ def train(epoch):
 
         batch = result.size()[0]
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MSE Loss: {loss.item()}')
-        loss_mse += loss.item() * batch
-        train_size += batch
+        loss_mse += loss.item()
 
         loss = mae(result, target)
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MAE Loss: {loss.item()}')
-        loss_mae += loss.item() * batch
+        loss_mae += loss.item()
 
         sim = 0.0
         for ix in range(0, target.shape[0]):
@@ -143,9 +141,10 @@ def train(epoch):
                 sml = ssim(imgx, imgy)
                 sim += sml / (imgx.shape[0] * imgx.shape[1])
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
-        total_ssim += sim * batch_size
+        total_ssim += sim
 
     logger.info(f'======================================================================')
+    train_size = len(train_loader)
     logger.info(f'Epoch: {epoch + 1:03d} | Train MSE Loss: {loss_mse / train_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {loss_mae/ train_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Train SSIM: {total_ssim / train_size}')
@@ -154,7 +153,6 @@ def train(epoch):
 
 def test(epoch):
     mdl.eval()
-    test_size = 0
     loss_mse = 0.0
     loss_mae = 0.0
     total_ssim = 0.0
@@ -169,7 +167,6 @@ def test(epoch):
         with th.no_grad():
             result = mdl(input)
             batch = result.size()[0]
-            test_size += batch
 
             loss = mse(result, target)
             loss_mse += loss.item() * batch
@@ -183,9 +180,10 @@ def test(epoch):
                     imgx = result[ix, jx].detach().cpu().numpy()
                     imgy = target[ix, jx].detach().cpu().numpy()
                     sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
-            total_ssim += sim * batch_size
+            total_ssim += sim
 
     logger.info(f'======================================================================')
+    test_size = len(test_loader)
     logger.info(f'Epoch: {epoch + 1:03d} | Test MSE Loss: {loss_mse / test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {loss_mae/ test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {total_ssim / test_size}')
