@@ -97,7 +97,7 @@ class MMModel(nn.Module):
                 param = self.rconvs[jx](flow)
                 output = (output + param[:, 0:10]) * param[:, 10:20] * input
 
-        output = self.relu6(self.oconv(output)) / 6
+        output = self.relu6(self.oconv(self.relu(output))) / 6
         return output * 255.0
 
 
