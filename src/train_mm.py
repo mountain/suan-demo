@@ -97,7 +97,7 @@ class MMModel(nn.Module):
         return output * 255.0
 
 
-mdl = MMModel()
+mdl = nn.DataParallel(MMModel(), output_device=0)
 mse = nn.MSELoss()
 
 evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).sum()
