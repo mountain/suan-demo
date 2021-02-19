@@ -74,7 +74,7 @@ class MMModel(nn.Module):
         self.rconvs = nn.ModuleList()
         self.bnorms = nn.ModuleList()
         self.senets = nn.ModuleList()
-        for ix in range(40):
+        for ix in range(10):
             self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
             self.bnorms.append(nn.BatchNorm2d(40, affine=True))
             self.senets.append(SELayer(40))
@@ -85,15 +85,13 @@ class MMModel(nn.Module):
         input = input / 255.0
         output = th.zeros_like(input)
         flow = self.iconv(input)
-        for ix in range(40):
+        for ix in range(10):
             flow = self.fconvs[ix](flow)
             flow = self.relu(flow)
             flow = self.bnorms[ix](flow)
             flow = self.senets[ix](flow)
-            if ix % 4 == 3:
-                jx = (ix - 3) // 4
-                param = self.rconvs[jx](flow)
-                output = (output + param[:, 0:10]) * param[:, 10:20] * input
+            param = self.rconvs[ix](flow)
+            output = (output + param[:, 0:10]) * param[:, 10:20] * input
 
         return self.oconv(output) * 255.0
 
