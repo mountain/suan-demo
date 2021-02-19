@@ -80,7 +80,7 @@ class MMModel(nn.Module):
             self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
             self.bnorms.append(nn.BatchNorm2d(40, affine=True))
             self.senets.append(SELayer(40))
-        for ix in range(50):
+        for ix in range(25):
             self.rconvs.append(nn.Conv2d(40, 20, kernel_size=3, padding=1))
 
     def forward(self, input):
@@ -92,8 +92,8 @@ class MMModel(nn.Module):
             flow = self.relu(flow)
             flow = self.bnorms[ix](flow)
             flow = self.senets[ix](flow)
-            if ix % 2 == 1:
-                jx = (ix - 1) // 2
+            if ix % 4 == 3:
+                jx = (ix - 3) // 4
                 param = self.rconvs[jx](flow)
                 output = (output + param[:, 0:10]) * param[:, 10:20] * input
 
