@@ -71,6 +71,7 @@ class MMModel(nn.Module):
         self.iconv = nn.Conv2d(10, 40, kernel_size=5, padding=2)
         self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
         self.se = SELayer(10)
+        self.relu6 = nn.ReLU6(inplace=True)
         self.fconvs = nn.ModuleList()
         self.rconvs = nn.ModuleList()
         self.bnorms = nn.ModuleList()
@@ -95,8 +96,9 @@ class MMModel(nn.Module):
             output = (output + param[:, 0:10]) * param[:, 10:20] * input
             output = self.relu(output)
             output = self.se(output)
+            output = self.relu6(self.oconv(output)) / 6
 
-        return self.oconv(output) * 255.0
+        return output * 255.0
 
 
 mdl = MMModel()
