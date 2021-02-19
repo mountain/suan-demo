@@ -69,7 +69,7 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.unet = resunet(10, 60, block=HyperBottleneck, layers=6, ratio=-2,
+        self.unet = resunet(10, 80, block=HyperBottleneck, layers=6, ratio=-2,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
@@ -79,13 +79,14 @@ class MMModel(nn.Module):
 
     def forward(self, input):
         input = input / 255.0
-        flow = self.unet(input).view(-1, 10, 2, 3, 64, 64)
+        flow = self.unet(input).view(-1, 10, 2, 4, 64, 64)
         output = th.zeros_like(input)
         for ix in range(2):
             aparam = flow[:, :, ix, 0]
             mparam = flow[:, :, ix, 1]
             uparam = flow[:, :, ix, 2]
-            output = (output + aparam * uparam) * (1 + mparam * input)
+            vparam = flow[:, :, ix, 3]
+            output = (output + aparam * uparam) * (1 + mparam * vparam)
 
         output = self.relu6(self.oconv(self.relu(output))) / 6
         return output * 255.0
