@@ -182,13 +182,12 @@ def test(epoch):
 
         with th.no_grad():
             result = mdl(input)
-            batch = result.size()[0]
 
             loss = evl_mse(result, target)
-            loss_mse += loss.item() * batch
+            loss_mse += loss.item()
 
             loss = evl_mae(result, target)
-            loss_mae += loss.item() * batch
+            loss_mae += loss.item()
 
             sim = 0.0
             for ix in range(0, target.shape[0]):
