@@ -219,6 +219,7 @@ def test(epoch):
         for p in sorted(glb)[-3:]:
             os.unlink(p)
 
+
 if __name__ == '__main__':
     for epoch in range(opt.n_epochs):
         try:
