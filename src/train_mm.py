@@ -63,34 +63,34 @@ train_loader = torch.utils.data.DataLoader(
 test_loader = torch.utils.data.DataLoader(
                 dataset=test_set,
                 batch_size=batch_size,
-                shuffle=False)
+                shuffle=True)
 
 
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.enc = resunet(10, 240, block=HyperBottleneck, layers=6, ratio=-1,
+        self.enc = resunet(10, 160, block=HyperBottleneck, layers=6, ratio=-1,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[2, 2, 2, 2, 2, 2],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
-        self.dec = resunet(20, 10, block=HyperBottleneck, layers=6, ratio=-4,
-                vblks=[0, 0, 0, 0, 0, 0], hblks=[0, 0, 0, 0, 0, 0],
-                scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
+        self.dec = resunet(20, 10, block=HyperBottleneck, layers=4, ratio=-4,
+                vblks=[0, 0, 0, 0], hblks=[0, 0, 0, 0],
+                scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
                 spatial=(64, 64), final_normalized=True)
 
-        self.dropout = nn.Dropout2d(p=0.2)
+        self.dropout = nn.Dropout2d(p=0.5)
 
     def forward(self, input):
         input = input / 255.0
         b, c, w, h = input.size()
-        flow = self.enc(input).view(-1, 20, 3, 4, 64, 64)
+        flow = self.enc(input).view(-1, 20, 2, 4, 64, 64)
 
         output = th.zeros(b, 20, w, h)
         if th.cuda.is_available():
             output = output.cuda()
 
-        for ix in range(3):
+        for ix in range(2):
             aparam = flow[:, :, ix, 0]
             mparam = flow[:, :, ix, 1]
             uparam = flow[:, :, ix, 2]
