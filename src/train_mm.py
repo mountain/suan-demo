@@ -69,14 +69,13 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.enc = resunet(10, 160, block=HyperBottleneck, layers=6, ratio=-1,
+        self.enc = resunet(10, 160, block=HyperBottleneck, layers=6, ratio=0,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
-        self.dec = resunet(20, 10, block=HyperBottleneck, layers=4, ratio=-4,
-                vblks=[0, 0, 0, 0], hblks=[0, 0, 0, 0],
-                scales=[-1, -1, -1, -1], factors=[1, 1, 1, 1],
+        self.dec = resunet(20, 10, block=HyperBottleneck, layers=0, ratio=0,
+                vblks=[], hblks=[], scales=[], factors=[],
                 spatial=(64, 64), final_normalized=True)
 
         self.dropout = nn.Dropout2d(p=0.5)
