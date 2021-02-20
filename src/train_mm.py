@@ -70,12 +70,12 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.enc = resunet(10, 240, block=HyperBottleneck, layers=6, ratio=-1,
-                vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                vblks=[2, 2, 2, 2, 2, 2], hblks=[2, 2, 2, 2, 2, 2],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
         self.dec = resunet(20, 10, block=HyperBottleneck, layers=6, ratio=-4,
-                vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                vblks=[1, 1, 1, 1, 1, 1], hblks=[0, 0, 0, 0, 0, 0],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64), final_normalized=True)
 
