@@ -69,12 +69,12 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.flow = resunet(10, 320, block=HyperBottleneck, layers=6, ratio=-2,
+        self.flow = resunet(10, 320, block=HyperBottleneck, layers=6, ratio=-1,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
-        self.dec = resunet(40, 10, block=HyperBottleneck, layers=6, ratio=-2,
+        self.dec = resunet(40, 10, block=HyperBottleneck, layers=6, ratio=-4,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64), final_normalized=True)
