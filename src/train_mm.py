@@ -13,7 +13,6 @@ from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from leibniz.unet import resunet
 from leibniz.unet.hyperbolic import HyperBottleneck
-from leibniz.unet.senet import SELayer
 
 from dataset.moving_mnist import MovingMNIST
 
@@ -144,7 +143,7 @@ def train(epoch):
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
         total_ssim += sim
 
-        if step == len(train_loader):
+        if step == len(train_loader) - 1:
             for ix in range(10):
                 img = input[0, ix].detach().cpu().numpy()
                 cv2.imwrite('%s/train_i_%02d.png' % (model_path, ix), img)
@@ -194,7 +193,7 @@ def test(epoch):
                     sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
             total_ssim += sim
 
-            if step == len(test_loader):
+            if step == len(test_loader) - 1:
                 for ix in range(10):
                     img = input[0, ix].detach().cpu().numpy()
                     cv2.imwrite('%s/test_i_%02d.png' % (model_path, ix), img)
