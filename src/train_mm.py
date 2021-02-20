@@ -147,13 +147,13 @@ def train(epoch):
         if step % 10 == 0:
             for ix in range(10):
                 img = input[0, ix].detach().cpu().numpy()
-                cv2.imwrite('%s/train_i%04d_%03d_%02d.png' % (model_path, epoch, step, ix), img)
+                cv2.imwrite('%s/train_i_%02d.png' % (model_path, ix), img)
             for ix in range(10):
                 img = target[0, ix].detach().cpu().numpy()
-                cv2.imwrite('%s/train_r%04d_%03d_%02d.png' % (model_path, epoch, step, ix), img)
+                cv2.imwrite('%s/train_r_%02d.png' % (model_path, ix), img)
             for ix in range(10):
                 img = result[0, ix].detach().cpu().numpy()
-                cv2.imwrite('%s/train_p%04d_%03d_%02d.png' % (model_path, epoch, step, ix), img)
+                cv2.imwrite('%s/train_p_%02d.png' % (model_path, ix), img)
 
     logger.info(f'======================================================================')
     train_size = len(train_loader)
@@ -197,13 +197,13 @@ def test(epoch):
             if epoch % 10 == 0 and step:
                 for ix in range(10):
                     img = input[0, ix].detach().cpu().numpy()
-                    cv2.imwrite('%s/test_i%04d_%03d_%02d.png' % (model_path, epoch, step, ix), img)
+                    cv2.imwrite('%s/test_i_%02d.png' % (model_path, ix), img)
                 for ix in range(10):
                     img = target[0, ix].detach().cpu().numpy()
-                    cv2.imwrite('%s/test_r%04d_%03d_%02d.png' % (model_path, epoch, step, ix), img)
+                    cv2.imwrite('%s/test_r_%02d.png' % (model_path, ix), img)
                 for ix in range(10):
                     img = result[0, ix].detach().cpu().numpy()
-                    cv2.imwrite('%s/test_p%04d_%03d_%02d.png' % (model_path, epoch, step, ix), img)
+                    cv2.imwrite('%s/test_p_%02d.png' % (model_path, ix), img)
 
     logger.info(f'======================================================================')
     test_size = len(test_loader)
