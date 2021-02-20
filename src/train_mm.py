@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch as th
 import torch.nn as nn
+import cv2
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
@@ -143,6 +144,17 @@ def train(epoch):
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
         total_ssim += sim
 
+        if step % 10 == 0:
+            for ix in range(10):
+                img = input[0, ix].detach().cpu().numpy()
+                cv2.imwrite('%s/train_i%04d_%03d.png' % (model_path, epoch, step), img)
+            for ix in range(10):
+                img = target[0, ix].detach().cpu().numpy()
+                cv2.imwrite('%s/train_r%04d_%03d.png' % (model_path, epoch, step), img)
+            for ix in range(10):
+                img = result[0, ix].detach().cpu().numpy()
+                cv2.imwrite('%s/train_p%04d_%03d.png' % (model_path, epoch, step), img)
+
     logger.info(f'======================================================================')
     train_size = len(train_loader)
     logger.info(f'Epoch: {epoch + 1:03d} | Train MSE Loss: {loss_mse / train_size}')
@@ -182,13 +194,30 @@ def test(epoch):
                     sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
             total_ssim += sim
 
+            if epoch % 10 == 0 and step:
+                for ix in range(10):
+                    img = input[0, ix].detach().cpu().numpy()
+                    cv2.imwrite('%s/test_i%04d_%03d.png' % (model_path, epoch, step), img)
+                for ix in range(10):
+                    img = target[0, ix].detach().cpu().numpy()
+                    cv2.imwrite('%s/test_r%04d_%03d.png' % (model_path, epoch, step), img)
+                for ix in range(10):
+                    img = result[0, ix].detach().cpu().numpy()
+                    cv2.imwrite('%s/test_p%04d_%03d.png' % (model_path, epoch, step), img)
+
     logger.info(f'======================================================================')
     test_size = len(test_loader)
+    simval = total_ssim / test_size
     logger.info(f'Epoch: {epoch + 1:03d} | Test MSE Loss: {loss_mse / test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {loss_mae/ test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {total_ssim / test_size}')
     logger.info(f'======================================================================')
 
+    th.save(mdl.state_dict(), model_path / f'm_ssim{simval:0.8f}_epoch{epoch + 1:03d}.mdl')
+    glb = list(model_path.glob('*.mdl'))
+    if len(glb) > 6:
+        for p in sorted(glb)[-3:]:
+            os.unlink(p)
 
 if __name__ == '__main__':
     for epoch in range(opt.n_epochs):
