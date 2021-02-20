@@ -69,31 +69,34 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.flow = resunet(10, 320, block=HyperBottleneck, layers=6, ratio=-1,
+        self.enc = resunet(10, 240, block=HyperBottleneck, layers=6, ratio=-1,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
-        self.dec = resunet(40, 10, block=HyperBottleneck, layers=6, ratio=-4,
+        self.dec = resunet(20, 10, block=HyperBottleneck, layers=6, ratio=-4,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64), final_normalized=True)
 
+        self.dropout = nn.Dropout2d(p=0.2)
+
     def forward(self, input):
         input = input / 255.0
         b, c, w, h = input.size()
-        flow = self.flow(input).view(-1, 40, 2, 4, 64, 64)
+        flow = self.enc(input).view(-1, 20, 3, 4, 64, 64)
 
-        output = th.zeros(b, 40, w, h)
+        output = th.zeros(b, 20, w, h)
         if th.cuda.is_available():
             output = output.cuda()
 
-        for ix in range(2):
+        for ix in range(3):
             aparam = flow[:, :, ix, 0]
             mparam = flow[:, :, ix, 1]
             uparam = flow[:, :, ix, 2]
             vparam = flow[:, :, ix, 3]
             output = (output + aparam * uparam) * (1 + mparam * vparam)
+            output = self.dropout(output)
 
         output = self.dec(output)
         return output * 255.0
