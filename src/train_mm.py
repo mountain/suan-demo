@@ -144,7 +144,7 @@ def train(epoch):
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
         total_ssim += sim
 
-        if step % 10 == 0:
+        if step == len(train_loader):
             for ix in range(10):
                 img = input[0, ix].detach().cpu().numpy()
                 cv2.imwrite('%s/train_i_%02d.png' % (model_path, ix), img)
@@ -194,7 +194,7 @@ def test(epoch):
                     sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
             total_ssim += sim
 
-            if epoch % 10 == 0 and step:
+            if step == len(test_loader):
                 for ix in range(10):
                     img = input[0, ix].detach().cpu().numpy()
                     cv2.imwrite('%s/test_i_%02d.png' % (model_path, ix), img)
