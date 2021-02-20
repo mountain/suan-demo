@@ -220,7 +220,7 @@ def test(epoch):
     th.save(mdl.state_dict(), model_path / f'm_ssim{simval:0.8f}_epoch{epoch + 1:03d}.mdl')
     glb = list(model_path.glob('*.mdl'))
     if len(glb) > 6:
-        for p in sorted(glb)[-3:]:
+        for p in sorted(glb)[3:]:
             os.unlink(p)
 
 
