@@ -107,7 +107,7 @@ mse = nn.MSELoss()
 
 evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).mean()
 evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).mean()
-optimizer = th.optim.Adam(mdl.parameters())
+optimizer = th.optim.AdamW(mdl.parameters())
 
 
 def train(epoch):
