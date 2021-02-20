@@ -1,18 +1,1 @@
-# Jupyter Notes on Computational Conformal Geometry
-
-How to start
--------------
-
-To view the notes, just issue below commands in your terminal
-
-in bash:
-```bash
-. hello
-jupyter notebook
-```
-
-or in zsh:
-```bash
-. ./hello
-jupyter notebook
-```
+Suan Demo
