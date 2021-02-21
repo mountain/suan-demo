@@ -11,7 +11,6 @@ import cv2
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
-from leibniz.resnet import resnet
 from leibniz.unet import resunet
 from leibniz.unet.hyperbolic import HyperBottleneck
 
@@ -19,7 +18,7 @@ from dataset.moving_mnist import MovingMNIST
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-g", "--gpu", type=str, default='-1', help="index of gpu")
+parser.add_argument("-g", "--gpu", type=str, default='0', help="index of gpu")
 parser.add_argument("-c", "--n_cpu", type=int, default=64, help="number of cpu threads to use during batch generation")
 parser.add_argument("-b", "--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("-e", "--epoch", type=int, default=0, help="current epoch to start training from")
@@ -67,17 +66,36 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=True)
 
 
-class DModel(nn.Module):
+class Discriminator(nn.Module):
     def __init__(self):
-        super().__init__()
+        super(Discriminator, self).__init__()
 
-        self.resnet = nn.ReLU(inplace=True)
-        self.relu6 = nn.ReLU6(inplace=True)
-        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
-        self.dropout = nn.Dropout2d(p=0.5)
+        def discriminator_block(in_filters, out_filters, bn=True):
+            block = [nn.Conv2d(in_filters, out_filters, 3, 2, 1), nn.LeakyReLU(0.2, inplace=True), nn.Dropout2d(0.25)]
+            if bn:
+                block.append(nn.BatchNorm2d(out_filters, 0.8))
+            return block
+
+        self.model = nn.Sequential(
+            *discriminator_block(opt.channels, 16, bn=False),
+            *discriminator_block(16, 32),
+            *discriminator_block(32, 64),
+            *discriminator_block(64, 128),
+        )
+
+        # The height and width of downsampled image
+        ds_size = opt.img_size // 2 ** 4
+        self.adv_layer = nn.Sequential(nn.Linear(128 * ds_size ** 2, 1), nn.Sigmoid())
+
+    def forward(self, img):
+        out = self.model(img)
+        out = out.view(out.shape[0], -1)
+        validity = self.adv_layer(out)
+
+        return validity
 
 
-class MMModel(nn.Module):
+class Generator(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -93,8 +111,8 @@ class MMModel(nn.Module):
 
         self.dec = lambda x: self.relu6(self.oconv(self.relu(x))) / 6
 
-    def forward(self, input):
-        input = input / 255.0
+    def forward(self, input, noise):
+        input = input / 255.0 + noise
         b, c, w, h = input.size()
         flow = self.enc(input).view(-1, 20, 2, 4, 64, 64)
 
@@ -115,19 +133,34 @@ class MMModel(nn.Module):
         return output * 255.0
 
 
-mdl = nn.DataParallel(MMModel(), output_device=0)
+generator = Generator()
+discriminator = Discriminator()
+adversarial_loss = torch.nn.BCELoss()
 mse = nn.MSELoss()
+
+if th.cuda.is_available():
+    generator.cuda()
+    discriminator.cuda()
+    adversarial_loss.cuda()
+    mse.cuda()
+
 
 evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).mean()
 evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).mean()
-optimizer = th.optim.AdamW(mdl.parameters())
+
+optimizer_G = torch.optim.Adam(generator.parameters())
+optimizer_D = torch.optim.Adam(discriminator.parameters())
+
+
+Tensor = torch.cuda.FloatTensor if th.cuda.is_available() else torch.FloatTensor
 
 
 def train(epoch):
+    generator.train()
+    discriminator.train()
     loss_mse = 0.0
     loss_mae = 0.0
     total_ssim = 0.0
-    mdl.train()
     for step, sample in enumerate(train_loader):
         logger.info(f'-----------------------------------------------------------------------')
         input, target = sample
@@ -135,13 +168,46 @@ def train(epoch):
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
-            mdl.cuda()
 
-        result = mdl(input)
+        # Adversarial ground truths
+        valid = nn.Variable(Tensor(input.shape[0], 1).fill_(1.0), requires_grad=False)
+        fake = nn.Variable(Tensor(input.shape[0], 1).fill_(0.0), requires_grad=False)
+
+        # Configure input
+        real_imgs = nn.Variable(input.type(Tensor))
+
+        # -----------------
+        #  Train Generator
+        # -----------------
+
+        optimizer_G.zero_grad()
+
+        # Sample noise as generator input
+        z = nn.Variable(Tensor(np.random.normal(0, 1, (input.shape[0], 10))))
+
+        # Generate a batch of images
+        result = generator(input, z)
+
+        # Loss measures generator's ability to fool the discriminator
         loss = mse(result, target)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        g_loss = loss + adversarial_loss(discriminator(result), valid)
+
+        g_loss.backward()
+        optimizer_G.step()
+
+        # ---------------------
+        #  Train Discriminator
+        # ---------------------
+
+        optimizer_D.zero_grad()
+
+        # Measure discriminator's ability to classify real from generated samples
+        real_loss = adversarial_loss(discriminator(real_imgs), valid)
+        fake_loss = adversarial_loss(discriminator(result.detach()), fake)
+        d_loss = (real_loss + fake_loss) / 2
+
+        d_loss.backward()
+        optimizer_D.step()
 
         loss = evl_mse(result, target).detach()
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MSE Loss: {loss.item()}')
@@ -181,7 +247,7 @@ def train(epoch):
 
 
 def test(epoch):
-    mdl.eval()
+    generator.eval()
     loss_mse = 0.0
     loss_mae = 0.0
     total_ssim = 0.0
@@ -191,10 +257,10 @@ def test(epoch):
         if th.cuda.is_available():
             input = input.cuda()
             target = target.cuda()
-            mdl.cuda()
+            generator.cuda()
 
         with th.no_grad():
-            result = mdl(input)
+            result = generator(input, 0)
 
             loss = evl_mse(result, target)
             loss_mse += loss.item()
@@ -229,7 +295,7 @@ def test(epoch):
     logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {total_ssim / test_size}')
     logger.info(f'======================================================================')
 
-    th.save(mdl.state_dict(), model_path / f'm_ssim{simval:0.8f}_epoch{epoch + 1:03d}.mdl')
+    th.save(generator.state_dict(), model_path / f'm_ssim{simval:0.8f}_epoch{epoch + 1:03d}.mdl')
     glb = list(model_path.glob('*.mdl'))
     if len(glb) > 6:
         for p in sorted(glb)[:1]:
