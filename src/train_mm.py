@@ -75,7 +75,7 @@ class MMModel(nn.Module):
         self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
         self.dropout = nn.Dropout2d(p=0.5)
 
-        self.enc = resunet(10, 8, block=HyperBottleneck, layers=6, ratio=0,
+        self.enc = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=0,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
@@ -93,7 +93,7 @@ class MMModel(nn.Module):
         for _ in range(20):
             for ix in range(2):
                 flow = self.enc(flow)
-                view = flow.view(-1, 1, 2, 4, 64, 64)
+                view = flow[:, 0:8].view(-1, 1, 2, 4, 64, 64)
                 aparam = view[:, :, ix, 0]
                 mparam = view[:, :, ix, 1]
                 uparam = view[:, :, ix, 2]
