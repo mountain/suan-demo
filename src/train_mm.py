@@ -75,15 +75,15 @@ class MMModel(nn.Module):
         self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
         self.dropout = nn.Dropout2d(p=0.5)
 
-        self.enc = resunet(10, 160, block=HyperBottleneck, layers=6, ratio=-2,
-                vblks=[2, 2, 2, 2, 2, 2], hblks=[3, 3, 3, 3, 3, 3],
+        self.enc = resunet(10, 240, block=HyperBottleneck, layers=6, ratio=-2,
+                vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
     def forward(self, input):
         input = input / 255.0
         b, c, w, h = input.size()
-        flow = self.enc(input).view(-1, 20, 2, 4, 64, 64)
+        flow = self.enc(input).view(-1, 20, 2, 6, 64, 64)
 
         oprand = th.zeros(b, 20, w, h)
         if th.cuda.is_available():
@@ -92,10 +92,12 @@ class MMModel(nn.Module):
         for ix in range(2):
             aparam = flow[:, :, ix, 0]
             mparam = flow[:, :, ix, 1]
-            uparam = flow[:, :, ix, 2]
-            vparam = flow[:, :, ix, 3]
+            pparam = flow[:, :, ix, 2]
+            uparam = flow[:, :, ix, 3]
+            vparam = flow[:, :, ix, 4]
+            wparam = flow[:, :, ix, 5]
             # output = (oprand + aparam * uparam) * th.exp(mparam * vparam * th.exp(pparam * wparam))
-            output = (oprand + aparam * uparam) * th.exp(mparam * vparam)
+            output = (oprand + aparam * uparam) * (1 + mparam * vparam * (1 + pparam * wparam))
             if ix < 2 - 1:
                 output = self.dropout(output)
 
