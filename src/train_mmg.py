@@ -11,6 +11,7 @@ import cv2
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
+from torch.autograd import Variable
 from leibniz.unet import resunet
 from leibniz.unet.hyperbolic import HyperBottleneck
 
@@ -170,11 +171,11 @@ def train(epoch):
             target = target.cuda()
 
         # Adversarial ground truths
-        valid = nn.Variable(Tensor(input.shape[0], 1).fill_(1.0), requires_grad=False)
-        fake = nn.Variable(Tensor(input.shape[0], 1).fill_(0.0), requires_grad=False)
+        valid = Variable(Tensor(input.shape[0], 1).fill_(1.0), requires_grad=False)
+        fake = Variable(Tensor(input.shape[0], 1).fill_(0.0), requires_grad=False)
 
         # Configure input
-        real_imgs = nn.Variable(input.type(Tensor))
+        real_imgs = Variable(input.type(Tensor))
 
         # -----------------
         #  Train Generator
@@ -183,7 +184,7 @@ def train(epoch):
         optimizer_G.zero_grad()
 
         # Sample noise as generator input
-        z = nn.Variable(Tensor(np.random.normal(0, 1, (input.shape[0], 10))))
+        z = Variable(Tensor(np.random.normal(0, 1, (input.shape[0], 10))))
 
         # Generate a batch of images
         result = generator(input, z)
