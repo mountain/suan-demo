@@ -110,8 +110,6 @@ class Generator(nn.Module):
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
-        self.dec = lambda x: self.relu6(self.oconv(self.relu(x))) / 6
-
     def forward(self, input, noise):
         input = input / 255.0 + noise
         b, c, w, h = input.size()
@@ -130,7 +128,7 @@ class Generator(nn.Module):
             if ix < 2 - 1:
                 output = self.dropout(output)
 
-        output = self.dec(output)
+        output = self.relu6(self.oconv(self.relu(output))) / 6
         return output * 255.0
 
 
