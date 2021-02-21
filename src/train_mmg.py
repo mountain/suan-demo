@@ -134,8 +134,8 @@ class Generator(nn.Module):
         return output * 255.0
 
 
-generator = Generator()
-discriminator = Discriminator()
+generator = nn.DataParallel(Generator(), output_device=0)
+discriminator = nn.DataParallel(Discriminator(), output_device=0)
 adversarial_loss = torch.nn.BCELoss()
 mse = nn.MSELoss()
 
