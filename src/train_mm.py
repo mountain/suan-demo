@@ -79,11 +79,11 @@ class MMModel(nn.Module):
         self.rconvs = nn.ModuleList()
         self.bnorms = nn.ModuleList()
         self.senets = nn.ModuleList()
-        for ix in range(60):
+        for ix in range(8):
             self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
             self.bnorms.append(nn.BatchNorm2d(40, affine=True))
             self.senets.append(SELayer(40))
-        for ix in range(15):
+        for ix in range(2):
             self.rconvs.append(nn.Conv2d(40, 80, kernel_size=3, padding=1))
         self.regular = None
 
@@ -96,13 +96,13 @@ class MMModel(nn.Module):
             output = output.cuda()
 
         flow = self.iconv(input)
-        for ix in range(60):
+        for ix in range(8):
             flow = self.fconvs[ix](flow)
             flow = self.relu(flow)
             flow = self.bnorms[ix](flow)
             flow = self.senets[ix](flow)
-            if ix % 4 == 3:
-                jx = (ix - 3) // 4
+            if ix % 2 == 1:
+                jx = (ix - 1) // 2
                 param = self.rconvs[jx](flow)
                 output = (output + param[:, 0:20] * param[:, 20:40]) * (1 + param[:, 40:60] * param[:, 60:80])
 
