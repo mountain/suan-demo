@@ -83,7 +83,7 @@ class MMModel(nn.Module):
     def forward(self, input):
         input = input / 255.0
         b, c, w, h = input.size()
-        flow = self.enc(input).view(-1, 20, 2, 6, 64, 64)
+        flow = self.enc(input).view(-1, 20, 2, 4, 64, 64)
 
         oprand = th.zeros(b, 20, w, h)
         if th.cuda.is_available():
@@ -92,11 +92,10 @@ class MMModel(nn.Module):
         for ix in range(2):
             aparam = flow[:, :, ix, 0]
             mparam = flow[:, :, ix, 1]
-            pparam = flow[:, :, ix, 2]
-            uparam = flow[:, :, ix, 3]
-            vparam = flow[:, :, ix, 4]
-            wparam = flow[:, :, ix, 5]
-            output = (oprand + aparam * uparam) * th.exp(mparam * vparam * th.exp(pparam * wparam))
+            uparam = flow[:, :, ix, 2]
+            vparam = flow[:, :, ix, 3]
+            # output = (oprand + aparam * uparam) * th.exp(mparam * vparam * th.exp(pparam * wparam))
+            output = (oprand + aparam * uparam) * th.exp(mparam * vparam)
             if ix < 2 - 1:
                 output = self.dropout(output)
 
