@@ -85,22 +85,28 @@ class MMModel(nn.Module):
         b, c, w, h = input.size()
         flow = self.enc(input).view(-1, 20, 2, 6, 64, 64)
 
-        oprand = th.zeros(b, 20, w, h)
+        oprand0 = th.zeros(b, 20, w, h)
         if th.cuda.is_available():
-            oprand = oprand.cuda()
+            oprand0 = oprand0.cuda()
 
-        for ix in range(2):
-            aparam = flow[:, :, ix, 0]
-            mparam = flow[:, :, ix, 1]
-            pparam = flow[:, :, ix, 2]
-            uparam = flow[:, :, ix, 3]
-            vparam = flow[:, :, ix, 4]
-            wparam = flow[:, :, ix, 5]
-            output = th.pow((oprand + aparam * uparam) * (1 + mparam * vparam), (1 + pparam * wparam))
-            if ix < 2 - 1:
-                output = self.dropout(output)
+        aparam = flow[:, :, 0, 0]
+        mparam = flow[:, :, 0, 1]
+        pparam = flow[:, :, 0, 2]
+        uparam = flow[:, :, 0, 3]
+        vparam = flow[:, :, 0, 4]
+        wparam = flow[:, :, 0, 5]
+        oprand1 = th.pow((oprand0 + aparam * uparam) * (1 + mparam * vparam), (1 + pparam * wparam))
+        oprand1 = self.dropout(oprand1)
 
-        output = self.relu6(self.oconv(self.relu(output))) / 6
+        aparam = flow[:, :, 1, 0]
+        mparam = flow[:, :, 1, 1]
+        pparam = flow[:, :, 1, 2]
+        uparam = flow[:, :, 1, 3]
+        vparam = flow[:, :, 1, 4]
+        wparam = flow[:, :, 1, 5]
+        oprand2 = th.pow((oprand1 + aparam * uparam) * (1 + mparam * vparam), (1 + pparam * wparam))
+
+        output = self.relu6(self.oconv(self.relu(oprand2))) / 6
         return output * 255.0
 
 
