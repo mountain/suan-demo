@@ -11,6 +11,7 @@ import cv2
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
+from leibniz.resnet import resnet
 from leibniz.unet import resunet
 from leibniz.unet.hyperbolic import HyperBottleneck
 
@@ -66,6 +67,16 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=True)
 
 
+class DModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.resnet = nn.ReLU(inplace=True)
+        self.relu6 = nn.ReLU6(inplace=True)
+        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
+        self.dropout = nn.Dropout2d(p=0.5)
+
+
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -75,32 +86,32 @@ class MMModel(nn.Module):
         self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
         self.dropout = nn.Dropout2d(p=0.5)
 
-        self.enc = resunet(10, 240, block=HyperBottleneck, layers=6, ratio=-1,
+        self.enc = resunet(10, 160, block=HyperBottleneck, layers=6, ratio=-1,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
+        self.dec = lambda x: self.relu6(self.oconv(self.relu(x))) / 6
+
     def forward(self, input):
         input = input / 255.0
         b, c, w, h = input.size()
-        flow = self.enc(input).view(-1, 20, 2, 6, 64, 64)
+        flow = self.enc(input).view(-1, 20, 2, 4, 64, 64)
 
-        oprand = th.zeros(b, 20, w, h)
+        output = th.zeros(b, 20, w, h)
         if th.cuda.is_available():
-            oprand = oprand.cuda()
+            output = output.cuda()
 
         for ix in range(2):
             aparam = flow[:, :, ix, 0]
             mparam = flow[:, :, ix, 1]
-            pparam = flow[:, :, ix, 2]
-            uparam = flow[:, :, ix, 3]
-            vparam = flow[:, :, ix, 4]
-            wparam = flow[:, :, ix, 5]
-            output = th.pow((oprand + aparam * uparam) * (1 + mparam * vparam), (1 + pparam * wparam))
+            uparam = flow[:, :, ix, 2]
+            vparam = flow[:, :, ix, 3]
+            output = (output + aparam * uparam) * (1 + mparam * vparam)
             if ix < 2 - 1:
                 output = self.dropout(output)
 
-        output = self.relu6(self.oconv(self.relu(output))) / 6
+        output = self.dec(output)
         return output * 255.0
 
 
