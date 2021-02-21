@@ -72,7 +72,7 @@ class MMModel(nn.Module):
 
         self.relu = nn.ReLU(inplace=True)
         self.relu6 = nn.ReLU6(inplace=True)
-        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
+        self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
         self.dropout = nn.Dropout2d(p=0.5)
 
         self.enc = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=-2,
@@ -90,7 +90,7 @@ class MMModel(nn.Module):
             oprand = oprand.cuda()
 
         result = []
-        for _ in range(20):
+        for _ in range(10):
             for ix in range(2):
                 flow = self.enc(flow)
                 view = flow[:, 0:8].view(-1, 1, 2, 4, 64, 64)
