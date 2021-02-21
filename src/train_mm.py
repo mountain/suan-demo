@@ -11,7 +11,7 @@ import cv2
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
-from leibniz.unet import resunet
+from leibniz.unet import resunet, SELayer
 from leibniz.unet.hyperbolic import HyperBottleneck
 
 from dataset.moving_mnist import MovingMNIST
@@ -71,44 +71,38 @@ class MMModel(nn.Module):
         super().__init__()
 
         self.relu = nn.ReLU(inplace=True)
+        self.iconv = nn.Conv2d(10, 40, kernel_size=5, padding=2)
+        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
+        self.se = SELayer(10)
         self.relu6 = nn.ReLU6(inplace=True)
-        self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
-        self.dropout = nn.Dropout2d(p=0.5)
-
-        self.enc = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=-2,
-                vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
-                scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
-                spatial=(64, 64))
+        self.fconvs = nn.ModuleList()
+        self.rconvs = nn.ModuleList()
+        self.bnorms = nn.ModuleList()
+        self.senets = nn.ModuleList()
+        for ix in range(60):
+            self.fconvs.append(nn.Conv2d(40, 40, kernel_size=5, padding=2))
+            self.bnorms.append(nn.BatchNorm2d(40, affine=True))
+            self.senets.append(SELayer(40))
+        for ix in range(15):
+            self.rconvs.append(nn.Conv2d(40, 80, kernel_size=3, padding=1))
+        self.regular = None
 
     def forward(self, input):
         input = input / 255.0
-        b, c, w, h = input.size()
-        flow = input
+        output = th.zeros_like(input)
+        flow = self.iconv(input)
+        for ix in range(60):
+            flow = self.fconvs[ix](flow)
+            flow = self.relu(flow)
+            flow = self.bnorms[ix](flow)
+            flow = self.senets[ix](flow)
+            if ix % 4 == 3:
+                jx = (ix - 3) // 4
+                param = self.rconvs[jx](flow)
+                output = (output + param[:, 0:20] * param[:, 20:40]) * (1 + param[:, 40:60] * param[:, 60:80])
 
-        oprand = th.zeros(b, 1, w, h)
-        if th.cuda.is_available():
-            oprand = oprand.cuda()
-
-        result = []
-        for _ in range(10):
-            for ix in range(2):
-                flow = self.enc(flow)
-                view = flow[:, 0:8].view(-1, 1, 2, 4, 64, 64)
-                aparam = view[:, :, ix, 0]
-                mparam = view[:, :, ix, 1]
-                uparam = view[:, :, ix, 2]
-                vparam = view[:, :, ix, 3]
-                # output = (oprand + aparam * uparam) * th.exp(mparam * vparam * th.exp(pparam * wparam))
-                # output = (oprand + aparam * uparam) * (1 + mparam * vparam * (1 + pparam * wparam))
-                oprand = (oprand + aparam * uparam) * (1 + mparam * vparam)
-                if ix < 2 - 1:
-                    oprand = self.dropout(oprand)
-                else:
-                    result.append(oprand)
-
-        result = th.cat(result, dim=1)
-        result = self.relu6(self.oconv(self.relu(result))) / 6
-        return result * 255.0
+        output = self.relu6(self.oconv(self.relu(output))) / 6
+        return output * 255.0
 
 
 mdl = nn.DataParallel(MMModel(), output_device=0)
