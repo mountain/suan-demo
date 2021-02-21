@@ -101,8 +101,8 @@ class MMModel(nn.Module):
             flow = self.relu(flow)
             flow = self.bnorms[ix](flow)
             flow = self.senets[ix](flow)
-            if ix % 2 == 1:
-                jx = (ix - 1) // 2
+            if ix % 4 == 3:
+                jx = (ix - 3) // 4
                 param = self.rconvs[jx](flow)
                 output = (output + param[:, 0:20] * param[:, 20:40]) * (1 + param[:, 40:60] * param[:, 60:80])
 
