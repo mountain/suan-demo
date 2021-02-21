@@ -190,7 +190,11 @@ def train(epoch):
 
         # Loss measures generator's ability to fool the discriminator
         loss = mse(result, target)
-        g_loss = loss + adversarial_loss(discriminator(result), valid)
+        a_loss = adversarial_loss(discriminator(result), valid)
+        g_loss = loss + a_loss
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | pred: {loss.item()}')
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | advs: {a_loss.item()}')
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | genr: {g_loss.item()}')
 
         g_loss.backward()
         optimizer_G.step()
@@ -205,6 +209,9 @@ def train(epoch):
         real_loss = adversarial_loss(discriminator(real_imgs), valid)
         fake_loss = adversarial_loss(discriminator(result.detach()), fake)
         d_loss = (real_loss + fake_loss) / 2
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | real: {real_loss.item()}')
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | fake: {fake_loss.item()}')
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | totl: {d_loss.item()}')
 
         d_loss.backward()
         optimizer_D.step()
