@@ -75,7 +75,7 @@ class MMModel(nn.Module):
         self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
         self.dropout = nn.Dropout2d(p=0.5)
 
-        self.enc = resunet(10, 240, block=HyperBottleneck, layers=6, ratio=-2,
+        self.enc = resunet(10, 8, block=HyperBottleneck, layers=6, ratio=0,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
@@ -83,26 +83,32 @@ class MMModel(nn.Module):
     def forward(self, input):
         input = input / 255.0
         b, c, w, h = input.size()
-        flow = self.enc(input).view(-1, 20, 2, 6, 64, 64)
+        flow = input
 
-        oprand = th.zeros(b, 20, w, h)
+        oprand = th.zeros(b, 1, w, h)
         if th.cuda.is_available():
             oprand = oprand.cuda()
 
-        for ix in range(2):
-            aparam = flow[:, :, ix, 0]
-            mparam = flow[:, :, ix, 1]
-            pparam = flow[:, :, ix, 2]
-            uparam = flow[:, :, ix, 3]
-            vparam = flow[:, :, ix, 4]
-            wparam = flow[:, :, ix, 5]
-            # output = (oprand + aparam * uparam) * th.exp(mparam * vparam * th.exp(pparam * wparam))
-            output = (oprand + aparam * uparam) * (1 + mparam * vparam * (1 + pparam * wparam))
-            if ix < 2 - 1:
-                output = self.dropout(output)
+        result = []
+        for _ in range(20):
+            for ix in range(2):
+                flow = self.enc(flow)
+                view = flow.view(-1, 1, 2, 4, 64, 64)
+                aparam = view[:, :, ix, 0]
+                mparam = view[:, :, ix, 1]
+                uparam = view[:, :, ix, 2]
+                vparam = view[:, :, ix, 3]
+                # output = (oprand + aparam * uparam) * th.exp(mparam * vparam * th.exp(pparam * wparam))
+                # output = (oprand + aparam * uparam) * (1 + mparam * vparam * (1 + pparam * wparam))
+                output = (oprand + aparam * uparam) * (1 + mparam * vparam)
+                if ix < 2 - 1:
+                    output = self.dropout(output)
+                else:
+                    result.append(output)
 
-        output = self.relu6(self.oconv(self.relu(output))) / 6
-        return output * 255.0
+        result = th.cat(result, dim=1)
+        result = self.relu6(self.oconv(self.relu(result))) / 6
+        return result * 255.0
 
 
 mdl = nn.DataParallel(MMModel(), output_device=0)
