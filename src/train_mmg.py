@@ -193,6 +193,7 @@ def train(epoch):
         loss = mse(result, target) / 255.0
         a_loss = adversarial_loss(discriminator(result), valid)
         g_loss = loss + a_loss
+        logger.info(f'-----------------------------------------------------------------------')
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | pred: {loss.item()}')
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | advs: {a_loss.item()}')
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | genr: {g_loss.item()}')
@@ -210,6 +211,7 @@ def train(epoch):
         real_loss = adversarial_loss(discriminator(real_imgs), valid)
         fake_loss = adversarial_loss(discriminator(result.detach()), fake)
         d_loss = (real_loss + fake_loss) / 2
+        logger.info(f'-----------------------------------------------------------------------')
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | real: {real_loss.item()}')
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | fake: {fake_loss.item()}')
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | totl: {d_loss.item()}')
@@ -217,6 +219,7 @@ def train(epoch):
         d_loss.backward()
         optimizer_D.step()
 
+        logger.info(f'-----------------------------------------------------------------------')
         loss = evl_mse(result, target).detach()
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MSE Loss: {loss.item()}')
         loss_mse += loss.item()
