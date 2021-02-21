@@ -190,7 +190,7 @@ def train(epoch):
         result = generator(input, z)
 
         # Loss measures generator's ability to fool the discriminator
-        loss = mse(result, target)
+        loss = mse(result, target) / 255.0
         a_loss = adversarial_loss(discriminator(result), valid)
         g_loss = loss + a_loss
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | pred: {loss.item()}')
