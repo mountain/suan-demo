@@ -69,20 +69,18 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
+
+        self.relu = nn.ReLU(inplace=True)
+        self.relu6 = nn.ReLU6(inplace=True)
+        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
+        self.dropout = nn.Dropout2d(p=0.5)
+
         self.enc = resunet(10, 160, block=HyperBottleneck, layers=6, ratio=-1,
                 vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
-        #self.dec = resunet(20, 10, block=HyperBottleneck, layers=0, ratio=0,
-        #        vblks=[], hblks=[], scales=[], factors=[],
-        #        spatial=(64, 64), final_normalized=True)
-
-        self.relu = nn.ReLU(inplace=True)
-        self.relu6 = nn.ReLU6(inplace=True)
-        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
-
-        self.dropout = nn.Dropout2d(p=0.5)
+        self.dec = lambda x: self.relu6(self.oconv(self.relu(x))) / 6
 
     def forward(self, input):
         input = input / 255.0
@@ -102,8 +100,7 @@ class MMModel(nn.Module):
             if ix < 2 - 1:
                 output = self.dropout(output)
 
-        #output = self.dec(output)
-        output = self.relu6(self.oconv(self.relu(output))) / 6
+        output = self.dec(output)
         return output * 255.0
 
 
