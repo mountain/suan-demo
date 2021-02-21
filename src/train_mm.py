@@ -76,7 +76,7 @@ class MMModel(nn.Module):
         self.dropout = nn.Dropout2d(p=0.5)
 
         self.enc = resunet(10, 160, block=HyperBottleneck, layers=6, ratio=-1,
-                vblks=[3, 3, 3, 3, 3, 3], hblks=[3, 3, 3, 3, 3, 3],
+                vblks=[2, 2, 2, 2, 2, 2], hblks=[3, 3, 3, 3, 3, 3],
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
