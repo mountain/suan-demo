@@ -89,7 +89,12 @@ class MMModel(nn.Module):
 
     def forward(self, input):
         input = input / 255.0
-        output = th.zeros_like(input)
+        b, c, w, h = input.size()
+
+        output = th.zeros(b, 20, w, h)
+        if th.cuda.is_available():
+            output = output.cuda()
+
         flow = self.iconv(input)
         for ix in range(60):
             flow = self.fconvs[ix](flow)
