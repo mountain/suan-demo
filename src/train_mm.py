@@ -74,9 +74,13 @@ class MMModel(nn.Module):
                 scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                 spatial=(64, 64))
 
-        self.dec = resunet(20, 10, block=HyperBottleneck, layers=0, ratio=0,
-                vblks=[], hblks=[], scales=[], factors=[],
-                spatial=(64, 64), final_normalized=True)
+        #self.dec = resunet(20, 10, block=HyperBottleneck, layers=0, ratio=0,
+        #        vblks=[], hblks=[], scales=[], factors=[],
+        #        spatial=(64, 64), final_normalized=True)
+
+        self.relu = nn.ReLU(inplace=True)
+        self.relu6 = nn.ReLU6(inplace=True)
+        self.oconv = nn.Conv2d(20, 10, kernel_size=3, padding=1)
 
         self.dropout = nn.Dropout2d(p=0.5)
 
@@ -97,7 +101,8 @@ class MMModel(nn.Module):
             output = (output + aparam * uparam) * (1 + mparam * vparam)
             output = self.dropout(output)
 
-        output = self.dec(output)
+        #output = self.dec(output)
+        output = self.relu6(self.oconv(self.relu(output))) / 6
         return output * 255.0
 
 
