@@ -100,11 +100,11 @@ class MMModel(nn.Module):
                 vparam = view[:, :, ix, 3]
                 # output = (oprand + aparam * uparam) * th.exp(mparam * vparam * th.exp(pparam * wparam))
                 # output = (oprand + aparam * uparam) * (1 + mparam * vparam * (1 + pparam * wparam))
-                output = (oprand + aparam * uparam) * (1 + mparam * vparam)
+                oprand = (oprand + aparam * uparam) * (1 + mparam * vparam)
                 if ix < 2 - 1:
-                    output = self.dropout(output)
+                    oprand = self.dropout(oprand)
                 else:
-                    result.append(output)
+                    result.append(oprand)
 
         result = th.cat(result, dim=1)
         result = self.relu6(self.oconv(self.relu(result))) / 6
