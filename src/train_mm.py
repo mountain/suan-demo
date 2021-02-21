@@ -96,7 +96,7 @@ class MMModel(nn.Module):
             uparam = flow[:, :, ix, 3]
             vparam = flow[:, :, ix, 4]
             wparam = flow[:, :, ix, 5]
-            output = (oprand + aparam * uparam) * th.exp(1 + mparam * vparam) * th.exp(th.exp(1 + pparam * wparam))
+            output = (oprand + aparam * uparam) * th.exp(mparam * vparam) * th.exp(th.exp(pparam * wparam))
             if ix < 2 - 1:
                 output = self.dropout(output)
 
