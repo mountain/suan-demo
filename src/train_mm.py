@@ -99,7 +99,8 @@ class MMModel(nn.Module):
             uparam = flow[:, :, ix, 2]
             vparam = flow[:, :, ix, 3]
             output = (output + aparam * uparam) * (1 + mparam * vparam)
-            output = self.dropout(output)
+            if ix < 2 - 1:
+                output = self.dropout(output)
 
         #output = self.dec(output)
         output = self.relu6(self.oconv(self.relu(output))) / 6
