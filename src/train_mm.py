@@ -69,17 +69,19 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.unet = resunet(10, 60, block=HyperBottleneck, layers=6, ratio=-2,
+        self.relu = nn.ReLU(inplace=True)
+        self.enc = resunet(10, 60, block=HyperBottleneck, layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.relu = nn.ReLU(inplace=True)
-        self.oconv = nn.Conv2d(10, 10, kernel_size=3, padding=1)
-        self.relu6 = nn.ReLU6(inplace=True)
+        self.dec = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=-2,
+                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
+                            spatial=(64, 64), final_normalized=True)
 
     def forward(self, input):
         input = input / 255.0
-        flow = self.unet(input).view(-1, 10, 2, 3, 64, 64)
+        flow = self.enc(input).view(-1, 10, 2, 3, 64, 64)
         output = th.zeros_like(input)
         for ix in range(2):
             aparam = flow[:, :, ix, 0]
@@ -87,7 +89,7 @@ class MMModel(nn.Module):
             uparam = flow[:, :, ix, 2]
             output = (output + aparam * uparam) * (1 + mparam * input)
 
-        output = self.relu6(self.oconv(self.relu(output))) / 6
+        output = self.dec(self.relu(output)) / 6
         return output * 255.0
 
 
