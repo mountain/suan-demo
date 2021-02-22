@@ -70,11 +70,11 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU(inplace=True)
-        self.enc = resunet(10, 90, block=HyperBottleneck, layers=6, ratio=-2,
+        self.enc = resunet(10, 90, block=HyperBottleneck, layers=6, ratio=-3,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.dec = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=-2,
+        self.dec = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=-3,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64), final_normalized=True)
