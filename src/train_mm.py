@@ -98,7 +98,7 @@ mse = nn.MSELoss()
 
 evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).mean()
 evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).mean()
-optimizer = th.optim.AdamW(mdl.parameters())
+optimizer = th.optim.Adam(mdl.parameters())
 
 
 def train(epoch):
@@ -135,7 +135,7 @@ def train(epoch):
                 imgx = result[ix, jx].detach().cpu().numpy()
                 imgy = target[ix, jx].detach().cpu().numpy()
                 sml = ssim(imgx, imgy)
-                sim += sml / (imgx.shape[0] * imgx.shape[1])
+                sim += sml / (target.shape[0] * target.shape[1])
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
         total_ssim += sim
 
@@ -185,7 +185,7 @@ def test(epoch):
                 for jx in range(0, target.shape[1]):
                     imgx = result[ix, jx].detach().cpu().numpy()
                     imgy = target[ix, jx].detach().cpu().numpy()
-                    sim += ssim(imgx, imgy) / (imgx.shape[0] * imgx.shape[1])
+                    sim += ssim(imgx, imgy) / (target.shape[0] * target.shape[1])
             total_ssim += sim
 
             if step == len(test_loader) - 1:
