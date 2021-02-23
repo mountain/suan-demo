@@ -70,25 +70,35 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU(inplace=True)
-        self.enc = resunet(10, 90, block=HyperBottleneck, layers=6, ratio=-3,
+        self.enc = resunet(10, 35, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.dec = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=-3,
+        self.dec = resunet(25, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64), final_normalized=True)
 
     def forward(self, input):
         input = input / 255.0
+        b, c, w, h = input.size()
 
-        flow = self.enc(input).view(-1, 10, 3, 3, 64, 64)
-        output = th.zeros_like(input)
-        for ix in range(3):
-            aparam = flow[:, :, ix, 0]
-            mparam = flow[:, :, ix, 1]
-            uparam = flow[:, :, ix, 2]
-            output = (output + aparam * uparam) * (1 + mparam * input)
+        enc = self.enc(input)
+        uprm, vprm, clz, flow = enc[:, 0:5], enc[:, 5:10], enc[:, 10:15], enc[:, 15:]
+        flow = flow.view(-1, 5, 2, 2, 64, 64)
+
+        filter = th.zeros(b, 5, w, h)
+        if th.cuda.is_available():
+            filter = filter.cuda()
+
+        for ix in range(2):
+            aprm = flow[:, :, ix, 0]
+            mprm = flow[:, :, ix, 1]
+            filter = (filter + aprm * uprm) * (1 + mprm * vprm)
+
+        filter = filter.view(-1, 5, 1, 64, 64)
+        clazzz = clz.view(-1, 1, 5, 64, 64)
+        output = (filter * clazzz).view(-1, 25, 64, 64)
 
         output = self.dec(output)
 
