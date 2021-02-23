@@ -81,11 +81,13 @@ class MMModel(nn.Module):
 
     def forward(self, input):
         input = input / 255.0
+        b, c, w, h = input.size()
+
         enc = self.enc(input)
         uprm, vprm, flow = enc[:, 0:20], enc[:, 20:40], enc[:, 40:]
         flow = flow.view(-1, 20, 2, 2, 64, 64)
 
-        output = th.zeros_like(input)
+        output = th.zeros(b, 20, w, h)
         for ix in range(2):
             aprm = flow[:, :, ix, 0]
             mprm = flow[:, :, ix, 1]
