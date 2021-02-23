@@ -70,25 +70,26 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU(inplace=True)
-        self.enc = resunet(10, 60, block=HyperBottleneck, layers=6, ratio=-2,
+        self.enc = resunet(10, 100, block=HyperBottleneck, layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.dec = resunet(10, 10, block=HyperBottleneck, layers=6, ratio=-2,
+        self.dec = resunet(40, 10, block=HyperBottleneck, layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64), final_normalized=True)
 
     def forward(self, input):
         input = input / 255.0
+        enc = self.enc(input)
+        uprm, vprm, flow = enc[:, 0:20], enc[:, 20:40], enc[:, 40:]
+        flow = flow.view(-1, 20, 2, 2, 64, 64)
 
-        flow = self.enc(input).view(-1, 10, 2, 3, 64, 64)
         output = th.zeros_like(input)
         for ix in range(2):
-            aparam = flow[:, :, ix, 0]
-            mparam = flow[:, :, ix, 1]
-            uparam = flow[:, :, ix, 2]
-            output = (output + aparam * uparam) * (1 + mparam * input)
+            aprm = flow[:, :, ix, 0]
+            mprm = flow[:, :, ix, 1]
+            output = (output + aprm * uprm) * (1 + mprm * vprm)
 
         output = self.dec(output)
 
