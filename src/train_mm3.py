@@ -12,6 +12,7 @@ import cv2
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from leibniz.unet import resunet, SELayer
+from leibniz.nn.activation import CappingRelu
 from leibniz.unet.hyperbolic import HyperBottleneck
 
 from dataset.moving_mnist import MovingMNIST
