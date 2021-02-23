@@ -71,11 +71,11 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU(inplace=True)
-        self.enc = resunet(10, 180, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+        self.enc = resunet(10, 150, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.dec = resunet(30, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+        self.dec = resunet(25, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64), final_normalized=True)
@@ -85,10 +85,10 @@ class MMModel(nn.Module):
         b, c, w, h = input.size()
 
         enc = self.enc(input)
-        uprm, vprm, flow = enc[:, 0:30], enc[:, 30:60], enc[:, 60:]
-        flow = flow.view(-1, 30, 2, 2, 64, 64)
+        uprm, vprm, flow = enc[:, 0:25], enc[:, 25:50], enc[:, 50:]
+        flow = flow.view(-1, 25, 2, 2, 64, 64)
 
-        output = th.zeros(b, 30, w, h)
+        output = th.zeros(b, 25, w, h)
         if th.cuda.is_available():
             output = output.cuda()
 
