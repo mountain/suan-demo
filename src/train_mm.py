@@ -88,6 +88,9 @@ class MMModel(nn.Module):
         flow = flow.view(-1, 20, 2, 2, 64, 64)
 
         output = th.zeros(b, 20, w, h)
+        if th.cuda.is_available():
+            output = output.cuda()
+
         for ix in range(2):
             aprm = flow[:, :, ix, 0]
             mprm = flow[:, :, ix, 1]
