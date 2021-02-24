@@ -72,7 +72,7 @@ class MMModel(nn.Module):
         super().__init__()
         self.relu = nn.ReLU()
         self.enc = resunet(10, 64, block=HyperBottleneck, relu=nn.ReLU(inplace=True), layers=6, ratio=-2,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                            vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
         self.dec = resunet(40, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-3,
