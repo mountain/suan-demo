@@ -88,7 +88,7 @@ class MMModel(nn.Module):
         uprm, vprm, clz, flow = enc[:, 0:10], enc[:, 10:20], enc[:, 20:24], enc[:, 24:]
         flow = flow.view(-1, 10, 2, 2, 64, 64)
 
-        filter = th.zeros(b, 5, w, h)
+        filter = th.zeros(b, 10, w, h)
         if th.cuda.is_available():
             filter = filter.cuda()
 
