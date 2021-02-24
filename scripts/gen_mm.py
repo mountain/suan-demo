@@ -161,7 +161,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Command line options')
-    parser.add_argument('--dest', type=str, dest='dest', default='movingmnistdata')
+    parser.add_argument('--dest', type=str, dest='dest', default='.data/mnist/raw/')
     parser.add_argument('--filetype', type=str, dest='filetype', default="npz")
     parser.add_argument('--training', type=bool, dest='training', default=True)
     parser.add_argument('--frame_size', type=int, dest='frame_size', default=64)
