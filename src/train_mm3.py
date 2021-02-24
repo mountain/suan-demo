@@ -75,7 +75,7 @@ class MMModel(nn.Module):
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.dec = resunet(40, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-4,
+        self.dec = resunet(40, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-3,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64), final_normalized=True)
@@ -97,8 +97,8 @@ class MMModel(nn.Module):
             mprm = flow[:, :, ix, 1]
             filter = (filter + aprm * uprm) * (1 + mprm * vprm)
 
-        filter = filter.view(-1, 10, 1, 64, 64)
-        clazzz = clz.view(-1, 1, 4, 64, 64)
+        filter = self.relu(filter).view(-1, 10, 1, 64, 64)
+        clazzz = self.relu(clz).view(-1, 1, 4, 64, 64)
         output = (filter * clazzz).view(-1, 40, 64, 64)
 
         output = self.dec(output)
