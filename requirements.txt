@@ -8,6 +8,7 @@ torchdiffeq
 torchvision
 torchpwl
 scikit-image
+webdataset
 
 Pillow
 opencv-python

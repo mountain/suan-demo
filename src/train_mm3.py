@@ -71,7 +71,7 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU()
-        self.enc = resunet(10, 64, block=HyperBottleneck, relu=nn.ReLU(inplace=True), layers=6, ratio=-2,
+        self.enc = resunet(10, 62, block=HyperBottleneck, relu=nn.ReLU(inplace=True), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[3, 3, 3, 3, 3, 3],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
@@ -85,7 +85,7 @@ class MMModel(nn.Module):
         b, c, w, h = input.size()
 
         enc = self.enc(input)
-        uprm, vprm, clz, flow = enc[:, 0:10], enc[:, 10:20], enc[:, 20:24], enc[:, 24:]
+        uprm, vprm, clz, flow = enc[:, 0:10], enc[:, 10:20], enc[:, 20:22], enc[:, 22:]
         flow = flow.view(-1, 10, 2, 2, 64, 64)
 
         filter = th.zeros(b, 10, w, h)
@@ -97,7 +97,7 @@ class MMModel(nn.Module):
             mprm = flow[:, :, ix, 1]
             filter = (filter + aprm * uprm) * (1 + mprm * vprm)
 
-        clazzz = self.relu(clz).view(-1, 1, 4, 64, 64, 1, 1)
+        clazzz = self.relu(clz).view(-1, 1, 2, 64, 64, 1, 1)
         filter = self.relu(self.dec(filter)).view(-1, 10, 1, 1, 1, 64, 64)
         output = th.sum(filter * clazzz, dim=(2, 3, 4)).view(-1, 10, 64, 64)
 
