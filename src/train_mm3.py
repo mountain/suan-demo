@@ -76,7 +76,7 @@ class MMModel(nn.Module):
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
         self.dec = resunet(40, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-3,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                            vblks=[1, 1, 1, 1, 1, 1], hblks=[0, 0, 0, 0, 0, 0],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64), final_normalized=True)
 
