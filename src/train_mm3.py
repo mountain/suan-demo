@@ -99,7 +99,7 @@ class MMModel(nn.Module):
 
         filter = filter.view(-1, 5, 1, 64, 64)
         clazzz = clz.view(-1, 1, 5, 64, 64)
-        output = (filter * clazzz).view(-1, 64, 64, 64)
+        output = (filter * clazzz).view(-1, 25, 64, 64)
 
         output = self.dec(output)
 
