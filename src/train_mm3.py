@@ -70,7 +70,7 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
         self.enc = resunet(10, 64, block=HyperBottleneck, relu=nn.ReLU(inplace=True), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
