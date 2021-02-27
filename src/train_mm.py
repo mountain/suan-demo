@@ -114,6 +114,15 @@ def train(epoch):
     loss_mse = 0.0
     loss_mae = 0.0
     total_ssim = 0.0
+
+    try:
+        if opt.check != '':
+            checkpoint = th.load(opt.check, map_location='cpu')
+            mdl.load_state_dict(checkpoint)
+    except ImportError as e:
+        logger.exception(e)
+        exit(1)
+
     mdl.train()
     for step, sample in enumerate(train_loader):
         logger.info(f'-----------------------------------------------------------------------')
