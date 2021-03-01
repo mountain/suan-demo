@@ -14,6 +14,7 @@ from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from leibniz.unet import resunet
 from leibniz.nn.activation import CappingRelu
+from leibniz.unet import resunet
 from leibniz.unet.hyperbolic import HyperBottleneck
 
 from dataset.moving_mnist import MovingMNIST
@@ -132,7 +133,10 @@ class MMModel(nn.Module):
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.warp = BilinearWarpingScheme()
+        self.dec = resunet(4, 2, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
+                            spatial=(64, 64))
 
     def forward(self, input):
         input = input / 255.0
@@ -141,9 +145,10 @@ class MMModel(nn.Module):
         results = []
         encode = self.rnn(input).view(b, 11, 2, 2, w, h)
 
-        figure0 = (encode[:, 0, 0, 0] + encode[:, 0, 0, 1]).view(b, 1, w, h)
-        figure1 = (encode[:, 0, 1, 0] + encode[:, 0, 1, 1]).view(b, 1, w, h)
-        figures = th.cat((figure0, figure1), dim=1)
+        hiddens = (encode[:, 0, 0, 0].view(b, 1, w, h), encode[:, 0, 0, 1].view(b, 1, w, h),
+                   encode[:, 0, 1, 0].view(b, 1, w, h) + encode[:, 0, 1, 1].view(b, 1, w, h))
+        figures = self.dec(h.cat(hiddens, dim=1))
+
         for ix in range(1, 11):
             output = th.zeros_like(input[:, 0:1])
             for jx in range(2):
