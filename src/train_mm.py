@@ -15,7 +15,7 @@ from leibniz.unet import resunet, SELayer
 from leibniz.nn.activation import CappingRelu
 from leibniz.unet.hyperbolic import HyperBottleneck
 
-from dataset.moving_mnist_large import MovingMNIST
+from dataset.moving_mnist import MovingMNIST
 
 
 parser = argparse.ArgumentParser()
