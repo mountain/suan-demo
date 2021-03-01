@@ -137,7 +137,7 @@ class MMModel(nn.Module):
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.warp = resunet(3, 1, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+        self.warp = resunet(3, 1, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-1,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
