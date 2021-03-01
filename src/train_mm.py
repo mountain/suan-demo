@@ -14,6 +14,7 @@ from skimage.metrics import structural_similarity as ssim
 from leibniz.unet import resunet
 from leibniz.nn.activation import CappingRelu
 from leibniz.unet.hyperbolic import HyperBottleneck
+from leibniz.unet.warp import BilinearWarpingScheme
 
 from dataset.moving_mnist import MovingMNIST
 
@@ -93,8 +94,8 @@ class HypTubeRNN(nn.Module):
         flow = flow.view(-1, hc, self.steps, 2, 2, w, h)
 
         result = []
-        output = th.zeros(b, hc, w, h, device=input.device)
         for jx in range(self.steps):
+            output = th.zeros(b, hc, w, h, device=input.device)
             for ix in range(2):
                 aparam = flow[:, :, jx, ix, 0]
                 mparam = flow[:, :, jx, ix, 1]
@@ -107,15 +108,24 @@ class HypTubeRNN(nn.Module):
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.rnn = HypTubeRNN(10, 6, 1, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+        self.rnn = HypTubeRNN(10, 4, 2, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
+        self.warp = BilinearWarpingScheme()
 
     def forward(self, input):
         input = input / 255.0
-        output = self.rnn(input)
-        return output * 255.0
+
+        results = []
+        output = input
+        velocity = self.rnn(input).view(-1, 2, 10, 64, 64)
+        for ix in range(10):
+            output = self.warp(output, velocity)
+            results.append(output)
+        results = th.cat(results, dim=1)
+
+        return results * 255.0
 
 
 mdl = nn.DataParallel(MMModel(), output_device=0)
