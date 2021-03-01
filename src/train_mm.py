@@ -128,7 +128,7 @@ class HypTubeRNN(nn.Module):
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.rnn = HypTubeRNN(10, 4, 6, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+        self.rnn = HypTubeRNN(10, 4, 4, 11, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
@@ -139,13 +139,16 @@ class MMModel(nn.Module):
         b, c, w, h = input.size()
 
         results = []
-        encode = self.rnn(input).view(b, 10, 2, 3, w, h)
-        for ix in range(10):
+        encode = self.rnn(input).view(b, 11, 2, 2, w, h)
+
+        figure0 = (encode[:, 0, 0, 0] + encode[:, 0, 0, 1]).view(b, 1, w, h)
+        figure1 = (encode[:, 0, 1, 0] + encode[:, 0, 1, 1]).view(b, 1, w, h)
+        figures = th.cat((figure0, figure1), dim=1)
+        for ix in range(1, 11):
             output = th.zeros_like(input[:, 0:1])
             for jx in range(2):
-                figure = encode[:, ix, jx, 0:1].view(b, 1, w, h)
-                velocity = encode[:, ix, jx, 1:3].view(b, 2, w, h)
-                output = output + self.warp(figure, velocity)
+                velocity = encode[:, ix, jx].view(b, 2, w, h)
+                output = output + self.warp(figures[:, jx:jx+1], velocity)
             results.append(output)
         results = th.cat(results, dim=1)
 
