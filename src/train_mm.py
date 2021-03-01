@@ -137,6 +137,7 @@ class MMModel(nn.Module):
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
+        self.warp = BilinearWarpingScheme()
 
     def forward(self, input):
         input = input / 255.0
