@@ -11,7 +11,7 @@ import cv2
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
-from leibniz.unet import resunet, SELayer
+from leibniz.unet import resunet
 from leibniz.nn.activation import CappingRelu
 from leibniz.unet.hyperbolic import HyperBottleneck
 
@@ -67,38 +67,54 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=True)
 
 
+
+class HypTubeRNN(nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, steps, block=HyperBottleneck, relu=nn.ReLU(inplace=True), attn=None, normalizor='batch',
+                 layers=4, ratio=-2, spatial=(256, 256), vblks=[1, 1, 1, 1], hblks=[1, 1, 1, 1], scales=[-2, -2, -2, -2], factors=[1, 1, 1, 1],
+                 final_normalized=False):
+        super().__init__()
+        self.in_channels = in_channels
+        self.hidden_channels = hidden_channels
+        self.out_channels = out_channels
+        self.steps = steps
+
+        self.enc = resunet(in_channels, 6 * hidden_channels, normalizor=normalizor, spatial=spatial, layers=layers, ratio=ratio,
+                vblks=vblks, hblks=hblks, scales=scales, factors=factors, block=block, relu=relu, attn=attn, final_normalized=False)
+
+        self.dec = resunet(hidden_channels, out_channels, normalizor=normalizor, spatial=spatial, layers=layers, ratio=ratio,
+                vblks=vblks, hblks=hblks, scales=scales, factors=factors, block=block, relu=relu, attn=attn, final_normalized=final_normalized)
+
+    def forward(self, input):
+        b, c, w, h = input.size()
+        hc = self.hidden_channels
+
+        flow = self.enc(input)
+        flow, uparam, vparam = flow[:, 2*hc:], flow[:, 0:hc], flow[:, hc:2*hc]
+        flow = flow.view(-1, hc, 2, 2, w, h)
+
+        result = []
+        output = th.zeros(b, hc, w, h, device=input.device)
+        for jx in range(self.steps):
+            for ix in range(2):
+                aparam = flow[:, :, ix, 0]
+                mparam = flow[:, :, ix, 1]
+                output = (output + aparam * uparam) * (1 + mparam * vparam)
+            result.append(self.dec(output))
+
+        return th.cat(result, dim=1)
+
+
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.relu = nn.ReLU(inplace=True)
-        self.enc = resunet(10, 150, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+        self.rnn = HypTubeRNN(10, 4, 1, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.dec = resunet(25, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
-                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
-                            spatial=(64, 64), final_normalized=True)
 
     def forward(self, input):
         input = input / 255.0
-        b, c, w, h = input.size()
-
-        enc = self.enc(input)
-        uprm, vprm, flow = enc[:, 0:25], enc[:, 25:50], enc[:, 50:]
-        flow = flow.view(-1, 25, 2, 2, 64, 64)
-
-        output = th.zeros(b, 25, w, h)
-        if th.cuda.is_available():
-            output = output.cuda()
-
-        for ix in range(2):
-            aprm = flow[:, :, ix, 0]
-            mprm = flow[:, :, ix, 1]
-            output = (output + aprm * uprm) * (1 + mprm * vprm)
-
-        output = self.dec(output)
-
+        output = self.rnn(input)
         return output * 255.0
 
 
