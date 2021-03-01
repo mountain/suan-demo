@@ -145,9 +145,7 @@ class MMModel(nn.Module):
         results = []
         encode = self.rnn(input).view(b, 11, 2, 2, w, h)
 
-        hiddens = (encode[:, 0, 0, 0].view(b, 1, w, h), encode[:, 0, 0, 1].view(b, 1, w, h),
-                   encode[:, 0, 1, 0].view(b, 1, w, h) + encode[:, 0, 1, 1].view(b, 1, w, h))
-        figures = self.dec(th.cat(hiddens, dim=1))
+        figures = self.dec(encode[:, 0].view(b, 4, w, h))
 
         for ix in range(1, 11):
             output = th.zeros_like(input[:, 0:1])
