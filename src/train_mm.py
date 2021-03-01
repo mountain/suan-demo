@@ -128,7 +128,7 @@ class HypTubeRNN(nn.Module):
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.rnn = HypTubeRNN(10, 4, 2, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+        self.rnn = HypTubeRNN(10, 4, 3, 10, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
@@ -140,10 +140,12 @@ class MMModel(nn.Module):
 
         results = []
         output = input[:, -1].view(b, 1, w, h)
-        velocity = self.rnn(input).view(b, 10, 2, w, h)
+        encode = self.rnn(input).view(b, 10, 3, w, h)
+        velocity = encode[:, :, 0:2].view(b, 10, 2, w, h)
+        ratio = encode[:, :, 2:].view(b, 10, 1, w, h)
         for ix in range(10):
             output = self.warp(output, velocity[:, ix, :])
-            results.append(output)
+            results.append(output * ratio)
         results = th.cat(results, dim=1)
 
         return results * 255.0
