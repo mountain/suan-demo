@@ -84,8 +84,8 @@ class BilinearWarpingScheme(nn.Module):
             self.grids[key] = grid.repeat(b * c, 1, 1, 1)
 
         grid = self.grids[key]
-        shift = grid.reshape(-1, 2, h, w) - ws.reshape(-1, 2, h, w)
-        shift = shift.permute(0, 2, 3, 1).view(b, c, h, w, 2)
+        shift = grid.reshape(b * c, 2, h, w) - ws.reshape(b * c, 2, h, w)
+        shift = shift.permute(0, 2, 3, 1).view(b * c, h, w, 2)
         return F.grid_sample(im, shift, padding_mode=self.padding_mode, mode='bilinear').reshape(b, c, h, w)
 
 
