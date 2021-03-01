@@ -116,12 +116,13 @@ class MMModel(nn.Module):
 
     def forward(self, input):
         input = input / 255.0
+        b, c, w, h = input.size()
 
         results = []
-        output = input
-        velocity = self.rnn(input).view(-1, 2, 10, 64, 64)
+        output = input[:, -1:]
+        velocity = self.rnn(input).view(b, 10, 2, w, h)
         for ix in range(10):
-            output = self.warp(output, velocity[:, :, ix])
+            output = self.warp(output, velocity[:, ix, :])
             results.append(output)
         results = th.cat(results, dim=1)
 
