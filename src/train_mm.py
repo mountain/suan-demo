@@ -119,7 +119,7 @@ class MMModel(nn.Module):
         b, c, w, h = input.size()
 
         results = []
-        output = input[:, -1:]
+        output = input[:, -1].view(b, 1, w, h)
         velocity = self.rnn(input).view(b, 10, 2, w, h)
         for ix in range(10):
             output = self.warp(output, velocity[:, ix, :])
