@@ -137,7 +137,10 @@ class MMModel(nn.Module):
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-        self.warp = BilinearWarpingScheme()
+        self.warp = resunet(3, 1, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
+                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
+                            spatial=(64, 64))
 
     def forward(self, input):
         input = input / 255.0
@@ -152,7 +155,8 @@ class MMModel(nn.Module):
             output = th.zeros_like(input[:, 0:1])
             for jx in range(2):
                 velocity = encode[:, ix, jx].view(b, 2, w, h)
-                output = output + self.warp(figures[:, jx:jx+1], velocity)
+                data = th.cat((figures[:, jx:jx + 1], velocity), dim=1)
+                output = output + self.warp(data)
             results.append(output)
         results = th.cat(results, dim=1)
 
