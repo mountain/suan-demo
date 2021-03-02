@@ -13,6 +13,7 @@ import cv2
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from leibniz.unet import resunet
+from leibniz.unet.senet import SELayer
 from leibniz.nn.activation import CappingRelu
 from leibniz.unet import resunet
 from leibniz.unet.hyperbolic import HyperBottleneck
@@ -100,6 +101,8 @@ class HypTubeRNN(nn.Module):
         self.out_channels = out_channels
         self.steps = steps
 
+        self.se = SELayer(hidden_channels)
+
         self.enc = resunet(in_channels, (4 * steps + 2) * hidden_channels, normalizor=normalizor, spatial=spatial, layers=layers, ratio=ratio,
                 vblks=vblks, hblks=hblks, scales=scales, factors=factors, block=block, relu=relu, attn=attn, final_normalized=False)
 
@@ -121,7 +124,7 @@ class HypTubeRNN(nn.Module):
                 aparam = flow[:, :, jx, ix, 0]
                 mparam = flow[:, :, jx, ix, 1]
                 output = (output + aparam * uparam) * (1 + mparam * vparam)
-            result.append(self.dec(output))
+            result.append(self.dec(self.se(output)))
 
         return th.cat(result, dim=1)
 
@@ -129,38 +132,15 @@ class HypTubeRNN(nn.Module):
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.rnn = HypTubeRNN(10, 8, 4, 11, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-3,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
-                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
-                            spatial=(64, 64))
-        self.dec = resunet(4, 2, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-2,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
-                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
-                            spatial=(64, 64))
-        self.warp = resunet(3, 1, block=HyperBottleneck, relu=CappingRelu(), layers=6, ratio=-1,
+        self.rnn = HypTubeRNN(10, 8, 1, 10, block=HyperBottleneck, relu=nn.ReLU(inplace=True), layers=6, ratio=-3,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
 
     def forward(self, input):
         input = input / 255.0
-        b, c, w, h = input.size()
-
-        results = []
-        encode = self.rnn(input).view(b, 11, 2, 2, w, h)
-
-        figures = self.dec(encode[:, 0].view(b, 4, w, h))
-
-        for ix in range(1, 11):
-            output = th.zeros_like(input[:, 0:1])
-            for jx in range(2):
-                velocity = encode[:, ix, jx].view(b, 2, w, h)
-                data = th.cat((figures[:, jx:jx + 1], velocity), dim=1)
-                output = output + self.warp(data)
-            results.append(output)
-        results = th.cat(results, dim=1)
-
-        return results * 255.0
+        output = self.rnn(input)
+        return output * 255.0
 
 
 mdl = nn.DataParallel(MMModel(), output_device=0)
