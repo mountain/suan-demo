@@ -69,7 +69,7 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.rnn = StepwiseHypTube(10, 8, 1, 10, block=HyperBottleneck, relu=nn.ReLU(inplace=True), layers=6, ratio=-3,
+        self.rnn = StepwiseHypTube(10, 8, 1, 10, block=HyperBottleneck, layers=6, ratio=0,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
