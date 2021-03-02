@@ -78,7 +78,7 @@ class HypTubeRNN(nn.Module):
         self.out_channels = out_channels
         self.steps = steps
 
-        self.cbam = CBAM(hidden_channels)
+        self.cbam = CBAM(hidden_channels, conv=nn.Conv2d)
 
         self.enc = resunet(in_channels, (4 * steps + 2) * hidden_channels, normalizor=normalizor, spatial=spatial, layers=layers, ratio=ratio,
                 vblks=vblks, hblks=hblks, scales=scales, factors=factors, block=block, relu=relu, attn=attn, final_normalized=False)
