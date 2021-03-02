@@ -12,9 +12,7 @@ import cv2
 
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
-from leibniz.unet import resunet
 from leibniz.unet.senet import SELayer
-from leibniz.nn.activation import CappingRelu
 from leibniz.unet import resunet
 from leibniz.unet.hyperbolic import HyperBottleneck
 
@@ -68,27 +66,6 @@ test_loader = torch.utils.data.DataLoader(
                 dataset=test_set,
                 batch_size=batch_size,
                 shuffle=True)
-
-
-class BilinearWarpingScheme(nn.Module):
-    def __init__(self, padding_mode='zeros'):
-        super(BilinearWarpingScheme, self).__init__()
-        self.padding_mode = padding_mode
-        self.grids = {}
-
-    def forward(self, im, ws):
-        b, c, h, w = im.size()
-        key = '%d-%s' % (b, im.device)
-        if key not in self.grids:
-            g0 = th.linspace(-1, 1, h, device=im.device, requires_grad=False)
-            g1 = th.linspace(-1, 1, w, device=im.device, requires_grad=False)
-            grid = th.cat(th.meshgrid([g0, g1]), dim=1).reshape(1, 2, h, w)
-            self.grids[key] = grid.repeat(b * c, 1, 1, 1)
-
-        grid = self.grids[key]
-        shift = grid.reshape(b * c, 2, h, w) - ws.reshape(b * c, 2, h, w)
-        shift = shift.permute(0, 2, 3, 1).view(b * c, h, w, 2)
-        return F.grid_sample(im, shift, padding_mode=self.padding_mode, mode='bilinear').reshape(b, c, h, w)
 
 
 class HypTubeRNN(nn.Module):
