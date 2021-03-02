@@ -76,7 +76,7 @@ class MMModel(nn.Module):
 
     def forward(self, input):
         input = input / 255.0
-        output = self.rnn(input)
+        output = self.rnn(input).view(-1, 10, 64, 64)
         return output * 255.0
 
 
