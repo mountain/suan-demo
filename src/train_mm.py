@@ -124,7 +124,7 @@ class HypTubeRNN(nn.Module):
                 aparam = flow[:, :, jx, ix, 0]
                 mparam = flow[:, :, jx, ix, 1]
                 output = (output + aparam * uparam) * (1 + mparam * vparam)
-            result.append(self.dec(self.se(output)))
+            result.append(self.dec(output + self.se(output)))
 
         return th.cat(result, dim=1)
 
