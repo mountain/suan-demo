@@ -69,7 +69,7 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = LayeredHypTube(10, 4, 10, 6, encoder=MLP2d, decoder=MLP2d)
+        self.tube = LayeredHypTube(10, 4, 10, 32, encoder=MLP2d, decoder=MLP2d)
 
     def forward(self, input):
         input = input / 255.0
