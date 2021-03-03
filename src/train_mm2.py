@@ -93,16 +93,16 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, in_channels, out_channels, channels_per_step=1):
+    def __init__(self, in_channels, out_channels, channels_per_step_in=1, channels_per_step_out=4):
         super().__init__()
-        self.unet = resunet(in_channels, out_channels,
+        self.unet = resunet(in_channels, 1,
                             block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
 
     def forward(self, input):
-        output = self.unet(input).view(-1, 10, 64, 64)
+        output = self.unet(input).view(-1, 1, 64, 64)
         return output
 
 
