@@ -70,7 +70,7 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = LayeredHypTube(10, 4, 10, 4, block=HyperBottleneck, relu=CappingRelu(), layers=4, ratio=-1,
+        self.tube = LayeredHypTube(10, 4, 10, 4, block=HyperBottleneck, relu=CappingRelu(), ratio=-1,
                             vblks=[1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1],
                             spatial=(64, 64))
