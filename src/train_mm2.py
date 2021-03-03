@@ -95,7 +95,7 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, in_channels, out_channels, channels_per_step_in=1, channels_per_step_out=4):
         super().__init__()
-        self.unet = resunet(in_channels, 1,
+        self.unet = resunet(in_channels, out_channels,
                             block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
@@ -109,7 +109,7 @@ class Decoder(nn.Module):
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = hyptub_stepwise(10, 4, 10, 10, encoder=Encoder, decoder=Decoder)
+        self.tube = hyptub_stepwise(10, 4, 1, 10, encoder=Encoder, decoder=Decoder)
 
     def forward(self, input):
         input = input / 255.0
