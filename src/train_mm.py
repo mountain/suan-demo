@@ -104,7 +104,7 @@ class MMModel(nn.Module):
         self.tube = LeveledHypTube(4, 6, 10, 2, encoder=resunet, decoder=resunet, propagator=resunet,
                             block=HyperBottleneck, relu=nn.ReLU(), ratio=-2, layers=3,
                             vblks=[1, 1, 1], hblks=[1, 1, 1],
-                            scales=[-2, -2, -2], factors=[2, 2, 2],
+                            scales=[-2, -2, -2], factors=[1, 1, 1],
                             spatial=(64, 64))
 
     def forward(self, input):
