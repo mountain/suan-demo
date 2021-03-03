@@ -39,7 +39,7 @@ np.set_printoptions(linewidth=np.inf)
 name = opt.model
 
 time_str = arrow.now().format('YYYYMMDD_HHmmss')
-model_path = Path(f'./_log-{time_str}')
+model_path = Path(f'./_log2-{time_str}')
 model_path.mkdir(exist_ok=True)
 log_file = model_path / Path('train.log')
 
