@@ -12,8 +12,6 @@ import cv2
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from leibniz.nn.net import resunet
-from leibniz.nn.net.hyptube import LeveledHypTube
-from leibniz.nn.activation import CappingRelu
 from leibniz.unet.hyperbolic import HyperBottleneck
 
 from dataset.moving_mnist import MovingMNIST
@@ -68,11 +66,43 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=True)
 
 
+class LeveledHypTube(nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, levels, encoder, decoder, propagator, **kwargs):
+        super().__init__()
+        self.in_channels = in_channels
+        self.hidden_channels = hidden_channels
+        self.out_channels = out_channels
+        self.levels = levels
+
+        self.enc = encoder(in_channels, 6 * hidden_channels, **kwargs)
+        self.dec = decoder(hidden_channels, out_channels, **kwargs)
+        self.leveled = nn.ModuleList()
+        for ix in range(levels):
+            self.leveled.append(propagator(6 * hidden_channels, 6 * hidden_channels, **kwargs))
+
+    def forward(self, input):
+        b, c, w, h = input.size()
+        hc = self.hidden_channels
+
+        flow = self.enc(input)
+        output = th.zeros(b, hc, w, h, device=input.device)
+        for jx in range(self.levels):
+            flow = self.leveled[jx](flow)
+            params, uparam, vparam = flow[:, 2 * hc:], flow[:, 0:hc], flow[:, hc:2 * hc]
+            params = params.view(-1, hc, 2, 2, w, h)
+            for ix in range(2):
+                aparam = params[:, :, ix, 0]
+                mparam = params[:, :, ix, 1]
+                output = (output + aparam * uparam) * (1 + mparam * vparam)
+
+        return self.dec(output)
+
+
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = LeveledHypTube(10, 8, 10, 4, encoder=resunet, decoder=resunet,
-                            block=HyperBottleneck, relu=CappingRelu(), ratio=-1, layers=3,
+        self.tube = LeveledHypTube(10, 8, 10, 4, encoder=resunet, decoder=resunet, propagator=resunet,
+                            block=HyperBottleneck, relu=nn.ReLU(), ratio=-1, layers=3,
                             vblks=[1, 1, 1], hblks=[1, 1, 1],
                             scales=[-2, -2, -2], factors=[2, 2, 2],
                             spatial=(64, 64))
