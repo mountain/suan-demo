@@ -101,7 +101,7 @@ class LeveledHypTube(nn.Module):
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = LeveledHypTube(10, 15, 10, 2, encoder=resunet, decoder=resunet, propagator=resunet,
+        self.tube = LeveledHypTube(3, 10, 10, 2, encoder=resunet, decoder=resunet, propagator=resunet,
                             block=HyperBottleneck, relu=nn.ReLU(), ratio=-1, layers=3,
                             vblks=[1, 1, 1], hblks=[1, 1, 1],
                             scales=[-2, -2, -2], factors=[2, 2, 2],
@@ -109,7 +109,7 @@ class MMModel(nn.Module):
 
     def forward(self, input):
         input = input / 255.0
-        output = self.tube(input).view(-1, 10, 64, 64)
+        output = self.tube(input[:, 7:]).view(-1, 10, 64, 64)
         return output * 255.0
 
 
