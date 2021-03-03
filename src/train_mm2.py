@@ -77,7 +77,7 @@ class StepwiseHypTube2(nn.Module):
         self.steps = steps
 
         self.enc = encoder(in_channels, (4 * steps + 2) * hidden_channels, **kwargs)
-        self.dec = decoder(hidden_channels, out_channels * steps, **kwargs)
+        self.dec = decoder(hidden_channels * steps, out_channels * steps, **kwargs)
 
     def forward(self, input):
         b, c, w, h = input.size()
