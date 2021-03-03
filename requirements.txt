@@ -10,6 +10,8 @@ torchpwl
 scikit-image
 webdataset
 
+conv-lstm
+
 Pillow
 opencv-python
 
