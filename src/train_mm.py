@@ -12,7 +12,8 @@ import cv2
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from leibniz.nn.net.hyptube import LayeredHypTube
-from leibniz.nn.net.mlp import MLP2d
+from leibniz.nn.activation import CappingRelu
+from leibniz.unet.hyperbolic import HyperBottleneck
 
 from dataset.moving_mnist import MovingMNIST
 
@@ -69,7 +70,10 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = LayeredHypTube(10, 4, 10, 32, encoder=MLP2d, decoder=MLP2d)
+        self.tube = LayeredHypTube(10, 4, 10, 4, block=HyperBottleneck, relu=CappingRelu(), layers=4, ratio=-1,
+                            vblks=[1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1],
+                            scales=[-1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1],
+                            spatial=(64, 64))
 
     def forward(self, input):
         input = input / 255.0
