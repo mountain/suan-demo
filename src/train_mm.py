@@ -12,7 +12,7 @@ import cv2
 from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from leibniz.nn.net import resunet
-from leibniz.nn.net import hyptub_layered
+from leibniz.nn.net.hyptube import LeveledHypTube
 from leibniz.nn.activation import CappingRelu
 from leibniz.unet.hyperbolic import HyperBottleneck
 
@@ -71,7 +71,7 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = hyptub_layered(10, 4, 10, 4, encoder=resunet, decoder=resunet,
+        self.tube = LeveledHypTube(10, 4, 10, 4, encoder=resunet, decoder=resunet,
                             block=HyperBottleneck, relu=CappingRelu(), ratio=-1, layers=3,
                             vblks=[1, 1, 1], hblks=[1, 1, 1],
                             scales=[-2, -2, -2], factors=[2, 2, 2],
