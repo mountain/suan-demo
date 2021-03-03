@@ -71,7 +71,7 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = LeveledHypTube(10, 4, 10, 8, encoder=resunet, decoder=resunet,
+        self.tube = LeveledHypTube(10, 8, 10, 4, encoder=resunet, decoder=resunet,
                             block=HyperBottleneck, relu=CappingRelu(), ratio=-1, layers=3,
                             vblks=[1, 1, 1], hblks=[1, 1, 1],
                             scales=[-2, -2, -2], factors=[2, 2, 2],
