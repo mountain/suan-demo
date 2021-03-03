@@ -77,9 +77,9 @@ class MMModel(nn.Module):
                             spatial=(64, 64))
 
     def forward(self, input):
-        input = (input / 255.0) * 2 - 1
+        input = input / 255.0
         output = self.tube(input).view(-1, 10, 64, 64)
-        return (output + 1) / 2 * 255.0
+        return output * 255.0
 
 
 mdl = nn.DataParallel(MMModel(), output_device=0)
