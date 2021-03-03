@@ -134,7 +134,7 @@ class Decoder(nn.Module):
                             spatial=(64, 64))
 
     def forward(self, input):
-        output = self.unet(input).view(-1, 1, 64, 64)
+        output = self.unet(input)
         return output
 
 
