@@ -111,7 +111,7 @@ class Encoder(nn.Module):
         self.out_channels = out_channels
 
         self.lstm = ConvLSTM(1, channels_per_step_out * 4, kernel_size=3, num_layers=1, return_all_layers=True)
-        self.unet = resunet(16, 8, block=Basic, relu=CappingRelu(), ratio=0, layers=6,
+        self.unet = resunet(32, 8, block=Basic, relu=CappingRelu(), ratio=0, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
