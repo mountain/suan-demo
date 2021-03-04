@@ -14,8 +14,6 @@ from skimage.metrics import structural_similarity as ssim
 from conv_lstm import ConvLSTM
 from leibniz.nn.net import resunet, hyptub_stepwise
 from leibniz.nn.layer.residual import Basic
-from leibniz.nn.layer.hyperbolic import HyperBottleneck
-from leibniz.nn.activation import CappingRelu
 
 from dataset.moving_mnist import MovingMNIST
 
@@ -110,27 +108,23 @@ class Encoder(nn.Module):
         self.channels_per_step_out = channels_per_step_out
         self.out_channels = out_channels
 
-        self.main = resunet(10, self.channels_per_step_out * 4 * self.out_steps, block=Basic, relu=CappingRelu(), ratio=1, layers=6,
+        self.relu = nn.ReLU(inplace=True)
+        self.main = resunet(10, self.channels_per_step_out * 4 * self.out_steps + 8, block=Basic, relu=self.relu, ratio=1, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
         self.lstm = ConvLSTM(1, channels_per_step_out * 4, kernel_size=3, num_layers=1, return_all_layers=False)
-        self.unet = resunet(32, 8, block=Basic, relu=CappingRelu(), ratio=1, layers=6,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
-                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
-                            spatial=(64, 64))
 
     def forward(self, input):
         main = self.main(input)
+        state, main = main[:, 0:8], main[:, 8:]
         input = input.view(-1, self.in_steps, self.channels_per_step_in, 64, 64)
         null = th.zeros_like(input, requires_grad=False)
         outputs, states = self.lstm(th.cat((input, null), dim=1))
-        laststate = th.cat(states[-1], dim=1)
-        laststate = self.unet(laststate)
         result = outputs[0][:, 10:20]
         result = result.view(-1, self.channels_per_step_out * 4 * self.out_steps, 64, 64)
         result = result + main
-        result = th.cat((laststate, result), dim=1)
+        result = th.cat((state, result), dim=1)
         return result.view(-1, self.out_channels, 64, 64)
 
 
