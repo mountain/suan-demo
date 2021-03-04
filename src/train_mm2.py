@@ -110,12 +110,15 @@ class Encoder(nn.Module):
         self.channels_per_step_out = channels_per_step_out
         self.out_channels = out_channels
 
+        self.main = resunet(10, self.channels_per_step_out * 4 * self.out_steps, block=Basic, relu=CappingRelu(), ratio=0, layers=6,
+                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                            scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
+                            spatial=(64, 64))
         self.lstm = ConvLSTM(1, channels_per_step_out * 4, kernel_size=3, num_layers=1, return_all_layers=True)
         self.unet = resunet(32, 8, block=Basic, relu=CappingRelu(), ratio=0, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
-
     def forward(self, input):
         input = input.view(-1, self.in_steps, self.channels_per_step_in, 64, 64)
         null = th.zeros_like(input, requires_grad=False)
@@ -124,6 +127,7 @@ class Encoder(nn.Module):
         laststate = self.unet(laststate)
         result = outputs[0][:, 10:20]
         result = result.view(-1, self.channels_per_step_out * 4 * self.out_steps, 64, 64)
+        result = result + self.main(input)
         result = th.cat((laststate, result), dim=1)
         return result.view(-1, self.out_channels, 64, 64)
 
