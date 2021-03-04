@@ -115,12 +115,11 @@ class Encoder(nn.Module):
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
 
-
     def forward(self, input):
         input = input.view(-1, self.in_steps, self.channels_per_step_in, 64, 64)
         null = th.zeros_like(input, requires_grad=False)
         outputs, states = self.lstm(th.cat((input, null), dim=1))
-        laststate = states[-1][0]
+        laststate = states[-1][1]
         laststate = self.unet(laststate)
         result = outputs[0][:, 10:20]
         result = result.view(-1, self.channels_per_step_out * 4 * self.out_steps, 64, 64)
