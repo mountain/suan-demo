@@ -13,6 +13,7 @@ from pathlib import Path
 from skimage.metrics import structural_similarity as ssim
 from conv_lstm import ConvLSTM
 from leibniz.nn.net import resunet, hyptub_stepwise
+from leibniz.nn.layer.residual import Basic
 from leibniz.nn.layer.hyperbolic import HyperBottleneck
 from leibniz.nn.activation import CappingRelu
 
@@ -110,7 +111,7 @@ class Encoder(nn.Module):
         self.out_channels = out_channels
 
         self.lstm = ConvLSTM(1, channels_per_step_out * 4, kernel_size=3, num_layers=1, return_all_layers=True)
-        self.unet = resunet(32, 8, block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
+        self.unet = resunet(16, 8, block=Basic, relu=CappingRelu(), ratio=0, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
@@ -130,7 +131,7 @@ class Decoder(nn.Module):
     def __init__(self, in_channels, out_channels, channels_per_step_in=1, channels_per_step_out=4):
         super().__init__()
         self.unet = resunet(in_channels, out_channels,
-                            block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
+                            block=Basic, relu=CappingRelu(), ratio=0, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
