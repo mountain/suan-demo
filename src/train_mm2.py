@@ -110,7 +110,7 @@ class Encoder(nn.Module):
         self.out_channels = out_channels
 
         self.lstm = ConvLSTM(1, channels_per_step_out * 4, kernel_size=3, num_layers=1, return_all_layers=True)
-        self.unet = resunet(16, 8, block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
+        self.unet = resunet(32, 8, block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
@@ -119,7 +119,7 @@ class Encoder(nn.Module):
         input = input.view(-1, self.in_steps, self.channels_per_step_in, 64, 64)
         null = th.zeros_like(input, requires_grad=False)
         outputs, states = self.lstm(th.cat((input, null), dim=1))
-        laststate = states[-1][1]
+        laststate = th.cat(states[-1], dim=1)
         laststate = self.unet(laststate)
         result = outputs[0][:, 10:20]
         result = result.view(-1, self.channels_per_step_out * 4 * self.out_steps, 64, 64)
