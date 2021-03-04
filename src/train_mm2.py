@@ -15,7 +15,7 @@ from conv_lstm import ConvLSTM
 from leibniz.nn.net import resunet, hyptub_stepwise
 from leibniz.nn.layer.residual import Basic
 
-from dataset.moving_mnist import MovingMNIST
+from dataset.moving_mnist_large import MovingMNIST
 
 
 parser = argparse.ArgumentParser()
