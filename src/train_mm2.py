@@ -108,8 +108,7 @@ class Encoder(nn.Module):
         self.channels_per_step_out = channels_per_step_out
         self.out_channels = out_channels
 
-        self.relu = nn.ReLU(inplace=True)
-        self.main = resunet(10, self.channels_per_step_out * 4 * self.out_steps + 8, block=Basic, relu=self.relu, ratio=1, layers=6,
+        self.main = resunet(10, self.channels_per_step_out * 4 * self.out_steps + 8, block=Basic, relu=nn.ReLU(inplace=True), ratio=1, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
@@ -132,7 +131,7 @@ class Decoder(nn.Module):
     def __init__(self, in_channels, out_channels, channels_per_step_in=1, channels_per_step_out=4):
         super().__init__()
         self.unet = resunet(in_channels, out_channels,
-                            block=Basic, relu=nn.ReLU(), ratio=0, layers=6,
+                            block=Basic, relu=nn.ReLU(inplace=True), ratio=0, layers=6,
                             vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
