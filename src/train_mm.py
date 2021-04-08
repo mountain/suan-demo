@@ -10,9 +10,9 @@ import torch.nn as nn
 import cv2
 
 from pathlib import Path
-from pytorch_msssim import ms_ssim as msssim, ssim
+from pytorch_msssim import ssim
 from leibniz.nn.net import resunet
-from leibniz.nn.layer.hyperbolic import HyperBottleneck
+from leibniz.nn.layer.hyperbolic import Bottleneck, HyperBottleneck
 from leibniz.nn.activation import CappingRelu
 
 from dataset.moving_mnist import MovingMNIST
@@ -67,10 +67,46 @@ test_loader = torch.utils.data.DataLoader(
                 shuffle=True)
 
 
+class HyperBottleneck2(nn.Module):
+    extension = 4
+    least_required_dim = 1
+
+    def __init__(self, dim, step, relu, conv, reduction=16):
+        super(HyperBottleneck2, self).__init__()
+        self.dim = dim
+        self.step = step
+
+        self.input = Bottleneck(dim, 2 * dim, step, relu, conv, reduction=reduction)
+        self.output = Bottleneck(8 * dim, 2 * dim, step, relu, conv, reduction=reduction)
+
+    def forward(self, x):
+        input = self.input(x)
+        velo = input[:, :self.dim]
+        theta = input[:, self.dim:]
+
+        cs = self.step * velo * th.cos(theta * np.pi * 6)
+        ss = self.step * velo * th.sin(theta * np.pi * 6)
+
+        y1 = (1 + ss) * x + cs
+        y2 = (1 + cs) * x - ss
+        y3 = (1 - cs) * x + ss
+        y4 = (1 - ss) * x - cs
+        ys = th.cat((y1, y2, y3, y4, cs, ss, velo, x), dim=1)
+
+        output = self.output(ys)
+        velo = output[:, :self.dim]
+        theta = output[:, self.dim:]
+
+        cs = self.step * velo * th.cos(theta * np.pi * 6)
+        ss = self.step * velo * th.sin(theta * np.pi * 6)
+
+        return (1 + ss) * x + cs
+
+
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.unet = resunet(10, 10, block=HyperBottleneck, relu=CappingRelu(), ratio=-1.5, layers=6,
+        self.unet = resunet(10, 10, block=HyperBottleneck2, relu=CappingRelu(), ratio=-1.5, layers=6,
                             vblks=[9, 9, 9, 9, 9, 9], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
