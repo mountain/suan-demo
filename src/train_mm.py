@@ -10,8 +10,8 @@ import torch.nn as nn
 import cv2
 
 from pathlib import Path
-from skimage.metrics import structural_similarity as ssim
-from leibniz.nn.net import resunet, hyptub
+from pytorch_msssim import ssim
+from leibniz.nn.net import resunet
 from leibniz.nn.layer.hyperbolic import HyperBottleneck
 from leibniz.nn.activation import CappingRelu
 
@@ -70,24 +70,24 @@ test_loader = torch.utils.data.DataLoader(
 class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.tube = hyptub(10, 25, 10, encoder=resunet, decoder=resunet,
-                            block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+        self.unet = resunet(10, 10, block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
+                            vblks=[9, 9, 9, 9, 9, 9], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
 
     def forward(self, input):
         input = input / 255.0
-        output = self.tube(input).view(-1, 10, 64, 64)
+        output = self.unet(input).view(-1, 10, 64, 64)
         return output * 255.0
 
 
 mdl = nn.DataParallel(MMModel(), output_device=0)
 mse = nn.MSELoss()
+optimizer = th.optim.Adam(mdl.parameters())
 
 evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).mean()
 evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).mean()
-optimizer = th.optim.Adam(mdl.parameters())
+evl_ssim = lambda x, y: ssim(x, y)
 
 
 def train(epoch):
@@ -114,7 +114,7 @@ def train(epoch):
             mdl.cuda()
 
         result = mdl(input)
-        loss = mse(result, target)
+        loss = ssim(result, target)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -127,15 +127,9 @@ def train(epoch):
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | MAE Loss: {loss.item()}')
         loss_mae += loss.item()
 
-        sim = 0.0
-        for ix in range(0, target.shape[0]):
-            for jx in range(0, target.shape[1]):
-                imgx = result[ix, jx].detach().cpu().numpy()
-                imgy = target[ix, jx].detach().cpu().numpy()
-                sml = ssim(imgx, imgy)
-                sim += sml / (target.shape[0] * target.shape[1])
+        loss = evl_ssim(result, target).detach()
         logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
-        total_ssim += sim
+        total_ssim += loss.item()
 
         if step == len(train_loader) - 1:
             for ix in range(10):

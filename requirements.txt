@@ -6,11 +6,7 @@ scipy
 leibniz
 torchdiffeq
 torchvision
-torchpwl
-scikit-image
-webdataset
-
-conv-lstm
+pytorch-msssim
 
 Pillow
 opencv-python
