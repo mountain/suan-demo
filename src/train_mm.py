@@ -10,7 +10,7 @@ import torch.nn as nn
 import cv2
 
 from pathlib import Path
-from pytorch_msssim import ssim
+from pytorch_msssim import ms_ssim as ssim
 from leibniz.nn.net import resunet
 from leibniz.nn.layer.hyperbolic import HyperBottleneck
 from leibniz.nn.activation import CappingRelu
