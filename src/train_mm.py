@@ -114,7 +114,7 @@ def train(epoch):
             mdl.cuda()
 
         result = mdl(input)
-        loss = - msssim(result, target)
+        loss = mse(result, target)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
