@@ -128,7 +128,7 @@ def train(epoch):
         loss_mae += loss.item()
 
         loss = evl_ssim(result, target).detach()
-        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {sim}')
+        logger.info(f'Epoch: {epoch + 1:03d} | Step: {step + 1:03d} | SSIM: {loss.item()}')
         total_ssim += loss.item()
 
         if step == len(train_loader) - 1:
