@@ -154,7 +154,7 @@ def test(epoch):
     mdl.eval()
     loss_mse = 0.0
     loss_mae = 0.0
-    total_ssim = 0.0
+    loss_ssim = 0.0
     for step, sample in enumerate(test_loader):
         input, target = sample
         input, target = input.float(), target.float()
@@ -172,13 +172,8 @@ def test(epoch):
             loss = evl_mae(result, target)
             loss_mae += loss.item()
 
-            sim = 0.0
-            for ix in range(0, target.shape[0]):
-                for jx in range(0, target.shape[1]):
-                    imgx = result[ix, jx].detach().cpu().numpy()
-                    imgy = target[ix, jx].detach().cpu().numpy()
-                    sim += ssim(imgx, imgy) / (target.shape[0] * target.shape[1])
-            total_ssim += sim
+            loss = evl_ssim(result, target).detach()
+            loss_ssim += loss.item()
 
             if step == len(test_loader) - 1:
                 for ix in range(10):
@@ -193,13 +188,12 @@ def test(epoch):
 
     logger.info(f'======================================================================')
     test_size = len(test_loader)
-    simval = total_ssim / test_size
     logger.info(f'Epoch: {epoch + 1:03d} | Test MSE Loss: {loss_mse / test_size}')
     logger.info(f'Epoch: {epoch + 1:03d} | Test MAE Loss: {loss_mae/ test_size}')
-    logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {total_ssim / test_size}')
+    logger.info(f'Epoch: {epoch + 1:03d} | Test SSIM: {loss_ssim / test_size}')
     logger.info(f'======================================================================')
 
-    th.save(mdl.state_dict(), model_path / f'm_ssim{simval:0.8f}_epoch{epoch + 1:03d}.mdl')
+    th.save(mdl.state_dict(), model_path / f'm_ssim{loss_ssim:0.8f}_epoch{epoch + 1:03d}.mdl')
     glb = list(model_path.glob('*.mdl'))
     if len(glb) > 6:
         for p in sorted(glb)[:1]:
