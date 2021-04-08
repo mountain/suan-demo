@@ -10,7 +10,7 @@ import torch.nn as nn
 import cv2
 
 from pathlib import Path
-from pytorch_msssim import ms_ssim as ssim
+from pytorch_msssim import ms_ssim as msssim, ssim
 from leibniz.nn.net import resunet
 from leibniz.nn.layer.hyperbolic import HyperBottleneck
 from leibniz.nn.activation import CappingRelu
@@ -85,7 +85,7 @@ mdl = nn.DataParallel(MMModel(), output_device=0)
 mse = nn.MSELoss()
 optimizer = th.optim.Adam(mdl.parameters())
 
-evl_mse = lambda x, y: th.mean((x - y)**2, dim=(0, 1)).mean()
+evl_mse = lambda x, y: mse(x, y)
 evl_mae = lambda x, y: th.mean(th.abs(x - y), dim=(0, 1)).mean()
 evl_ssim = lambda x, y: ssim(x, y)
 
@@ -114,7 +114,7 @@ def train(epoch):
             mdl.cuda()
 
         result = mdl(input)
-        loss = - ssim(result, target)
+        loss = - msssim(result, target)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
