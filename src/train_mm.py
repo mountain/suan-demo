@@ -15,7 +15,7 @@ from leibniz.nn.net import resunet, hyptub
 from leibniz.nn.layer.hyperbolic import HyperBottleneck
 from leibniz.nn.activation import CappingRelu
 
-from dataset.moving_mnist import MovingMNIST
+from dataset.moving_mnist_large import MovingMNIST
 
 
 parser = argparse.ArgumentParser()
@@ -115,7 +115,7 @@ def train(epoch):
             mdl.cuda()
 
         result = mdl(input)
-        loss = mse(result, target) - ssim(result, target)
+        loss = - ssim(result, target)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
