@@ -71,8 +71,8 @@ class MMModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.tube = hyptub(10, 25, 10, encoder=resunet, decoder=resunet,
-                            block=HyperBottleneck, relu=CappingRelu(), ratio=-2, layers=6,
-                            vblks=[1, 1, 1, 1, 1, 1], hblks=[1, 1, 1, 1, 1, 1],
+                            block=HyperBottleneck, relu=CappingRelu(), ratio=-1.5, layers=6,
+                            vblks=[3, 3, 3, 3, 3, 3], hblks=[1, 1, 1, 1, 1, 1],
                             scales=[-1, -1, -1, -1, -1, -1], factors=[1, 1, 1, 1, 1, 1],
                             spatial=(64, 64))
 
